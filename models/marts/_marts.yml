@@ -1,0 +1,169 @@
+models:
+  - name: dim_customers
+    description: >
+      Dimension table for B2C customers enriched with loyalty segment details.
+      Each row represents a single customer version with a surrogate key, active flag,
+      geographic attributes, and loyalty tier metadata. This is the primary customer
+      dimension used by analysts and the semantic layer for customer-level analysis.
+    columns:
+      - name: customer_key
+        description: >
+          Surrogate key generated from customer_id using dbt_utils.generate_surrogate_key.
+          Stable identifier for joining to fact tables.
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Business-facing customer identifier from the source system.
+        tests:
+          - unique
+          - not_null
+      - name: customer_name
+        description: Full display name of the customer.
+        tests:
+          - not_null
+      - name: city
+        description: City of the customer address.
+      - name: region
+        description: Geographic sales region in uppercase (e.g., WEST, EAST, CENTRAL).
+      - name: state
+        description: State or province of the customer.
+      - name: lat
+        description: Latitude coordinate of the customer location.
+      - name: lon
+        description: Longitude coordinate of the customer location.
+      - name: loyalty_segment
+        description: Loyalty tier name (e.g., Gold, Silver, Bronze).
+      - name: loyalty_segment_description
+        description: Full descriptive label of the loyalty tier.
+      - name: unit_threshold
+        description: Minimum cumulative units needed to achieve this loyalty tier.
+      - name: units_purchased
+        description: Total units purchased by this customer, used for loyalty qualification.
+      - name: valid_from
+        description: Start date of this customer record version.
+      - name: valid_to
+        description: End date of this record version; null for currently active records.
+      - name: ship_to_address
+        description: Full formatted shipping address for the customer.
+      - name: is_active
+        description: >
+          Boolean flag indicating whether this customer record is currently active.
+          True when valid_to is null or valid_to is on or after today's date.
+
+  - name: dim_loyalty_segments
+    description: >
+      Dimension table for loyalty tier definitions. This reference table describes each
+      loyalty segment, its qualifying unit threshold, and validity window. Use this model
+      to filter or group customers by loyalty tier without joining back through customers.
+    columns:
+      - name: loyalty_segment_key
+        description: Surrogate key generated from loyalty_segment_id.
+        tests:
+          - unique
+          - not_null
+      - name: loyalty_segment_id
+        description: Business identifier for the loyalty segment.
+        tests:
+          - unique
+          - not_null
+      - name: loyalty_segment_description
+        description: Full descriptive label of the loyalty tier.
+        tests:
+          - not_null
+      - name: unit_threshold
+        description: Minimum cumulative units purchased to qualify for this tier.
+      - name: valid_from
+        description: Date this segment definition became effective.
+      - name: valid_to
+        description: Date this segment definition expires; null means currently active.
+      - name: is_current
+        description: Boolean flag; true when this loyalty segment definition is currently in effect.
+
+  - name: fct_orders
+    description: >
+      Unified fact table combining B2B retail orders and B2C e-commerce sales orders into
+      a single, consistent model. The order_type column distinguishes the channel ('b2b' or 'b2c').
+      B2B orders carry monetary amount, cancellation reasons, and customer account metadata.
+      B2C orders carry line item counts and promotional flags. This is the primary orders
+      fact table consumed by revenue, volume, and cancellation analyses.
+    columns:
+      - name: order_key
+        description: Surrogate primary key generated from order_id and order_type to ensure global uniqueness.
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Source system order identifier (unique within each order_type channel).
+        tests:
+          - not_null
+      - name: customer_id
+        description: Customer identifier; references B2B ret_customers.id or B2C customers.customer_id depending on order_type.
+      - name: customer_name
+        description: Display name of the customer at the time of the order.
+      - name: order_date
+        description: Date/timestamp when the order was placed.
+        tests:
+          - not_null
+      - name: order_amount
+        description: Total monetary value of the order; null for B2C orders where amount is not captured at the order level.
+      - name: order_status
+        description: Fulfillment or completion status of the order.
+      - name: order_type
+        description: Channel indicator — 'b2b' for retail orders, 'b2c' for e-commerce sales orders.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['b2b', 'b2c']
+      - name: number_of_line_items
+        description: Count of product line items in the order; populated for B2C orders, null for B2B.
+      - name: has_promo
+        description: Boolean flag; true when a promotional code was applied. Applicable to B2C orders only.
+      - name: cancel_return_reason
+        description: Reason for cancellation or return; populated for B2B orders only.
+      - name: region
+        description: Geographic region associated with the customer who placed the order.
+
+  - name: fct_support_tickets
+    description: >
+      Fact table for B2B customer support tickets, enriched with customer account metadata.
+      Each row represents a single support ticket with its issue type, current status, and
+      a derived is_open flag for tracking active ticket volume. Used to analyze support
+      workload, resolution rates, and identify high-risk customer accounts.
+    columns:
+      - name: ticket_key
+        description: Surrogate primary key generated from ticket_id.
+        tests:
+          - unique
+          - not_null
+      - name: ticket_id
+        description: Source system ticket identifier.
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key referencing the B2B customer who opened the ticket.
+        tests:
+          - not_null
+      - name: customer_name
+        description: Primary contact name at the customer account.
+      - name: company_name
+        description: Company name of the B2B customer.
+      - name: region
+        description: Geographic region of the customer account.
+      - name: created_at
+        description: Timestamp when the ticket was opened.
+        tests:
+          - not_null
+      - name: issue_type
+        description: Category or classification of the support issue.
+        tests:
+          - not_null
+      - name: status
+        description: Current resolution status of the ticket.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['open', 'closed', 'resolved', 'in_progress']
+      - name: is_open
+        description: Boolean flag; true when the ticket status is 'open' or 'in_progress'.

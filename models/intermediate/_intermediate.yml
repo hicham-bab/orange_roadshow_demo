@@ -1,0 +1,73 @@
+models:
+  - name: int_customers_enriched
+    description: >
+      B2C customers enriched with loyalty segment details. Joins stg_customers to
+      stg_loyalty_segments on the loyalty_segment / loyalty_segment_id relationship to
+      attach the full tier description and unit threshold alongside customer demographics.
+      This model is the direct upstream of dim_customers.
+    columns:
+      - name: customer_id
+        description: Business-facing customer identifier. Primary key of this model.
+        tests:
+          - unique
+          - not_null
+      - name: customer_name
+        description: Full display name of the customer.
+        tests:
+          - not_null
+      - name: city
+        description: City of the customer address.
+      - name: region
+        description: Uppercased geographic sales region.
+      - name: state
+        description: State or province.
+      - name: lat
+        description: Latitude of the customer location.
+      - name: lon
+        description: Longitude of the customer location.
+      - name: loyalty_segment
+        description: Loyalty tier name as recorded on the customer record.
+      - name: loyalty_segment_description
+        description: Full descriptive label of the loyalty tier from the segments lookup.
+      - name: unit_threshold
+        description: Minimum units purchased required for this loyalty tier.
+      - name: units_purchased
+        description: Cumulative units purchased by this customer.
+      - name: valid_from
+        description: Start date of the customer record version.
+      - name: valid_to
+        description: End date of the customer record version; null if currently active.
+      - name: ship_to_address
+        description: Full formatted shipping address.
+
+  - name: int_ret_orders_with_customers
+    description: >
+      B2B retail orders enriched with customer account information. Joins stg_ret_orders
+      to stg_ret_customers to make company name, contact name, region, and account start
+      date available on every order row. This model feeds fct_orders for the B2B segment.
+    columns:
+      - name: order_id
+        description: Surrogate primary key of the retail order.
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key to the B2B customer account.
+        tests:
+          - not_null
+      - name: amount
+        description: Total order value (numeric, 18,2 precision).
+      - name: status
+        description: Current fulfillment status of the order.
+      - name: created_at
+        description: Timestamp when the order was placed.
+      - name: cancel_return_reason
+        description: Cancellation or return reason; null for active orders.
+      - name: name
+        description: Primary contact name at the customer account.
+      - name: company_name
+        description: Company name of the B2B customer.
+      - name: region
+        description: Geographic sales region of the customer account.
+      - name: customer_start_date
+        description: Date the B2B customer relationship began.

@@ -1,0 +1,139 @@
+semantic_models:
+  - name: customers
+    description: >
+      Semantic model over dim_customers. Enables slicing and aggregating customer
+      metrics by region, loyalty tier, city, and activity status. The primary entity
+      is the individual customer keyed on customer_id.
+    model: ref('dim_customers')
+    entities:
+      - name: customer
+        type: primary
+        expr: customer_id
+    dimensions:
+      - name: region
+        type: categorical
+        description: Geographic sales region of the customer (e.g., WEST, EAST, CENTRAL).
+      - name: city
+        type: categorical
+        description: City of the customer address.
+      - name: state
+        type: categorical
+        description: State or province of the customer.
+      - name: loyalty_segment
+        type: categorical
+        description: Loyalty tier name assigned to the customer (e.g., Gold, Silver, Bronze).
+      - name: is_active
+        type: categorical
+        description: Whether the customer record is currently active (valid_to is null or in the future).
+      - name: valid_from
+        type: time
+        time_granularity: day
+        description: Start date of the customer record version; used for cohort and trend analysis.
+    measures:
+      - name: customer_count
+        description: Count of distinct customers.
+        expr: customer_id
+        agg: count_distinct
+      - name: total_units_purchased
+        description: Sum of all units purchased across customers.
+        expr: units_purchased
+        agg: sum
+      - name: avg_units_purchased
+        description: Average number of units purchased per customer.
+        expr: units_purchased
+        agg: average
+
+  - name: orders
+    description: >
+      Semantic model over fct_orders. Covers both B2B and B2C order channels in a unified
+      model. Revenue, order count, and cancellation metrics are available with slicing by
+      order type, status, promotional flag, region, and date.
+    model: ref('fct_orders')
+    entities:
+      - name: order
+        type: primary
+        expr: order_key
+      - name: customer
+        type: foreign
+        expr: customer_id
+    dimensions:
+      - name: order_status
+        type: categorical
+        description: Current fulfillment or completion status of the order.
+      - name: order_type
+        type: categorical
+        description: Channel indicator — 'b2b' for retail orders, 'b2c' for e-commerce orders.
+      - name: has_promo
+        type: categorical
+        description: Whether a promotional code was applied to the order (B2C only).
+      - name: region
+        type: categorical
+        description: Geographic region of the customer who placed the order.
+      - name: order_date
+        type: time
+        time_granularity: day
+        is_partition: true
+        description: Date the order was placed; used as the primary time dimension for trend analysis.
+    measures:
+      - name: order_count
+        description: Count of distinct orders.
+        expr: order_key
+        agg: count_distinct
+      - name: total_revenue
+        description: Sum of order amounts; covers B2B orders only (B2C amounts are null).
+        expr: order_amount
+        agg: sum
+      - name: avg_order_value
+        description: Average order amount across orders that have a recorded amount.
+        expr: order_amount
+        agg: average
+      - name: b2b_order_count
+        description: Count of B2B orders, derived using a conditional expression.
+        expr: "case when order_type = 'b2b' then 1 else 0 end"
+        agg: sum
+      - name: cancelled_order_count
+        description: Count of orders with a cancelled status.
+        expr: "case when order_status = 'cancelled' then 1 else 0 end"
+        agg: sum
+
+  - name: support_tickets
+    description: >
+      Semantic model over fct_support_tickets. Tracks support ticket volume, open/active
+      ticket counts, and issue type breakdowns by customer region and time. The primary
+      entity is the individual ticket keyed on ticket_key with a foreign customer entity.
+    model: ref('fct_support_tickets')
+    entities:
+      - name: ticket
+        type: primary
+        expr: ticket_key
+      - name: customer
+        type: foreign
+        expr: customer_id
+    dimensions:
+      - name: issue_type
+        type: categorical
+        description: Category or classification of the support issue.
+      - name: status
+        type: categorical
+        description: Current resolution status of the ticket.
+      - name: is_open
+        type: categorical
+        description: Whether the ticket is currently active (status is open or in_progress).
+      - name: region
+        type: categorical
+        description: Geographic region of the customer who opened the ticket.
+      - name: created_date
+        type: time
+        time_granularity: day
+        is_partition: true
+        expr: cast(created_at as date)
+        description: Date the ticket was opened; derived from the created_at timestamp.
+    measures:
+      - name: ticket_count
+        description: Count of distinct support tickets.
+        expr: ticket_key
+        agg: count_distinct
+      - name: open_ticket_count
+        description: Count of tickets that are currently open or in progress.
+        expr: "case when is_open then 1 else 0 end"
+        agg: sum

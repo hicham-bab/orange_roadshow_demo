@@ -1,0 +1,245 @@
+sources:
+  - name: fivetran_retail
+    description: >
+      Raw tables synced by Fivetran from a Google Cloud PostgreSQL source into Snowflake every 6 hours.
+      All tables include Fivetran metadata columns (_fivetran_synced, _fivetran_deleted) to track
+      sync timestamps and soft-deletes. This source powers the retail analytics platform covering
+      B2C customers, B2B retail customers, orders, and support tickets.
+    database: HICHAMB_FIVETRAN_DEMO
+    schema: retail
+    loaded_at_field: _fivetran_synced
+    freshness:
+      warn_after: {count: 7, period: hour}
+      error_after: {count: 13, period: hour}
+
+    tables:
+      - name: customers
+        description: >
+          B2C (direct-to-consumer) customer master table. Each row represents a customer
+          with demographic, geographic, and loyalty information. Customers may have
+          validity windows (valid_from / valid_to) representing SCD2-style history in the source.
+        columns:
+          - name: id
+            description: Surrogate primary key assigned by the source system.
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: Business-facing customer identifier used across order and loyalty systems.
+            tests:
+              - not_null
+          - name: customer_name
+            description: Full display name of the customer.
+            tests:
+              - not_null
+          - name: city
+            description: City where the customer is located.
+          - name: district
+            description: District or sub-region within the city.
+          - name: state
+            description: State or province of the customer address.
+          - name: region
+            description: Broad geographic sales region (e.g., WEST, EAST, CENTRAL).
+          - name: postcode
+            description: Postal or ZIP code of the customer address.
+          - name: street
+            description: Street address of the customer.
+          - name: unit
+            description: Apartment, suite, or unit number within a building.
+          - name: number
+            description: Street number component of the address.
+          - name: lat
+            description: Latitude coordinate of the customer location.
+          - name: lon
+            description: Longitude coordinate of the customer location.
+          - name: ship_to_address
+            description: Full formatted shipping address used on orders.
+          - name: loyalty_segment
+            description: >
+              Human-readable loyalty segment name (e.g., Gold, Silver, Bronze).
+              Joins to the loyalty_segments table on loyalty_segment_id.
+          - name: units_purchased
+            description: Cumulative number of units the customer has purchased, used for loyalty tier calculation.
+          - name: tax_code
+            description: Tax classification code applied to the customer account.
+          - name: tax_id
+            description: Customer tax identification number for invoicing purposes.
+          - name: valid_from
+            description: Start date of this customer record version (SCD2 history tracking).
+          - name: valid_to
+            description: End date of this customer record version; null means the record is currently active.
+          - name: _fivetran_synced
+            description: Timestamp when Fivetran last synced this row from the source database.
+          - name: _fivetran_deleted
+            description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
+
+      - name: loyalty_segments
+        description: >
+          Reference/lookup table defining the loyalty tier program. Each row describes a
+          loyalty segment with its unit threshold (minimum units purchased to qualify) and
+          validity window. Used to enrich customer records with full tier descriptions.
+        columns:
+          - name: id
+            description: Surrogate primary key for the loyalty segment record.
+            tests:
+              - unique
+              - not_null
+          - name: loyalty_segment_id
+            description: Business identifier for the loyalty segment, matches the loyalty_segment field on customers.
+            tests:
+              - unique
+              - not_null
+          - name: loyalty_segment_description
+            description: Full descriptive name or label for the loyalty tier (e.g., "Gold Member - Top Tier").
+            tests:
+              - not_null
+          - name: unit_threshold
+            description: Minimum cumulative units purchased required to qualify for this loyalty segment.
+          - name: valid_from
+            description: Date from which this loyalty segment definition is active.
+          - name: valid_to
+            description: Date when this loyalty segment definition expires; null means currently active.
+          - name: _fivetran_synced
+            description: Timestamp when Fivetran last synced this row from the source database.
+          - name: _fivetran_deleted
+            description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
+
+      - name: ret_customers
+        description: >
+          B2B (business-to-business) retail customer accounts. Each row represents a company
+          or business entity that places wholesale or retail orders. These customers have
+          dedicated account managers and are tracked separately from B2C consumers.
+        columns:
+          - name: id
+            description: Surrogate primary key for the retail customer record.
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Primary contact name at the B2B customer account.
+            tests:
+              - not_null
+          - name: company_name
+            description: Legal or trading name of the B2B customer company.
+            tests:
+              - not_null
+          - name: email
+            description: Primary contact email address for the account.
+          - name: region
+            description: Geographic sales region the B2B customer is assigned to.
+          - name: customer_start_date
+            description: Date the B2B customer account was first established.
+          - name: _fivetran_synced
+            description: Timestamp when Fivetran last synced this row from the source database.
+          - name: _fivetran_deleted
+            description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
+
+      - name: ret_orders
+        description: >
+          Retail (B2B) orders placed by ret_customers. Each row is a single order with
+          an amount, status, and optional cancellation or return reason. Orders link
+          back to ret_customers via order_user_id.
+        columns:
+          - name: id
+            description: Surrogate primary key for the retail order.
+            tests:
+              - unique
+              - not_null
+          - name: order_user_id
+            description: Foreign key referencing ret_customers.id — the B2B customer who placed the order.
+            tests:
+              - not_null
+          - name: amount
+            description: Total monetary value of the order in the source currency.
+            tests:
+              - not_null
+          - name: status
+            description: Current fulfillment status of the order (e.g., completed, cancelled, pending, processing, refunded).
+            tests:
+              - not_null
+          - name: created_at
+            description: Timestamp when the order was placed in the source system.
+            tests:
+              - not_null
+          - name: cancel_return_reason
+            description: >
+              Free-text reason provided when an order is cancelled or a return is initiated.
+              Null for orders that are not cancelled or returned.
+          - name: _fivetran_synced
+            description: Timestamp when Fivetran last synced this row from the source database.
+          - name: _fivetran_deleted
+            description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
+
+      - name: ret_tickets
+        description: >
+          Customer support tickets raised by B2B retail customers. Each row represents
+          a support interaction with an issue type, current status, and timestamp.
+          Tickets link to ret_customers via ticket_user_id.
+        columns:
+          - name: id
+            description: Surrogate primary key for the support ticket.
+            tests:
+              - unique
+              - not_null
+          - name: ticket_user_id
+            description: Foreign key referencing ret_customers.id — the B2B customer who opened the ticket.
+            tests:
+              - not_null
+          - name: created_at
+            description: Timestamp when the support ticket was opened.
+            tests:
+              - not_null
+          - name: issue_type
+            description: Category or classification of the support issue (e.g., billing, shipping, product defect).
+            tests:
+              - not_null
+          - name: status
+            description: Current resolution status of the ticket (open, closed, resolved, in_progress).
+            tests:
+              - not_null
+          - name: _fivetran_synced
+            description: Timestamp when Fivetran last synced this row from the source database.
+          - name: _fivetran_deleted
+            description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
+
+      - name: sales_orders
+        description: >
+          E-commerce / B2C sales orders placed by direct consumers. Each row represents
+          an online transaction with potentially multiple line items. The clicked_items
+          and ordered_products columns contain JSON-formatted product detail arrays.
+          Promotional information is captured when a promo code or campaign applies.
+        columns:
+          - name: id
+            description: Surrogate primary key for the sales order.
+            tests:
+              - unique
+              - not_null
+          - name: customer_id
+            description: Business identifier of the B2C customer who placed the order.
+            tests:
+              - not_null
+          - name: customer_name
+            description: Display name of the customer at the time the order was placed.
+          - name: order_number
+            description: Human-readable order reference number shown to the customer.
+            tests:
+              - unique
+              - not_null
+          - name: order_datetime
+            description: Timestamp when the order was submitted by the customer.
+            tests:
+              - not_null
+          - name: number_of_line_items
+            description: Count of distinct product line items included in this order.
+          - name: clicked_items
+            description: JSON array capturing products the customer viewed or clicked before purchasing.
+          - name: ordered_products
+            description: JSON array of products included in the order with SKU, quantity, and price details.
+          - name: promo_info
+            description: >
+              Promotional code or campaign identifier applied to this order.
+              Null if no promotion was applied.
+          - name: _fivetran_synced
+            description: Timestamp when Fivetran last synced this row from the source database.
+          - name: _fivetran_deleted
+            description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.

@@ -1,0 +1,213 @@
+models:
+  - name: stg_customers
+    description: >
+      Cleaned and standardized B2C customer records sourced from the Fivetran-synced retail.customers table.
+      Soft-deleted records are excluded. Latitude and longitude are cast to float, units_purchased to integer,
+      and region is uppercased for consistent filtering. This model is the foundation for customer enrichment
+      and the dim_customers mart.
+    columns:
+      - name: customer_id
+        description: Business-facing customer identifier. Primary key of this staging model.
+        tests:
+          - unique
+          - not_null
+      - name: customer_name
+        description: Full display name of the customer.
+        tests:
+          - not_null
+      - name: city
+        description: City of the customer address.
+      - name: district
+        description: District or sub-region within the city.
+      - name: state
+        description: State or province of the customer.
+      - name: region
+        description: Uppercased geographic sales region (e.g., WEST, EAST, CENTRAL).
+      - name: postcode
+        description: Postal or ZIP code.
+      - name: street
+        description: Street name of the customer address.
+      - name: unit
+        description: Apartment or suite number.
+      - name: number
+        description: Street number.
+      - name: lat
+        description: Latitude coordinate cast to float.
+      - name: lon
+        description: Longitude coordinate cast to float.
+      - name: ship_to_address
+        description: Full formatted shipping address.
+      - name: loyalty_segment
+        description: Loyalty tier name; joins to stg_loyalty_segments on loyalty_segment_id.
+      - name: units_purchased
+        description: Cumulative units purchased cast to integer.
+        tests:
+          - not_null
+      - name: tax_code
+        description: Tax classification code.
+      - name: tax_id
+        description: Customer tax identification number.
+      - name: valid_from
+        description: Start date of this record version.
+      - name: valid_to
+        description: End date of this record version; null if currently active.
+      - name: _fivetran_synced
+        description: Timestamp of the last Fivetran sync for this row.
+
+  - name: stg_loyalty_segments
+    description: >
+      Cleaned loyalty segment reference data from retail.loyalty_segments. Soft-deleted records
+      are excluded and unit_threshold is cast to numeric. This lookup table drives loyalty tier
+      enrichment for B2C customers.
+    columns:
+      - name: loyalty_segment_id
+        description: Business identifier for the loyalty segment. Primary key of this model.
+        tests:
+          - unique
+          - not_null
+      - name: loyalty_segment_description
+        description: Full descriptive name of the loyalty tier.
+        tests:
+          - not_null
+      - name: unit_threshold
+        description: Minimum cumulative units purchased to qualify for this tier, cast to numeric.
+      - name: valid_from
+        description: Date from which this segment definition is active.
+      - name: valid_to
+        description: Expiry date of this segment definition; null means currently active.
+      - name: _fivetran_synced
+        description: Timestamp of the last Fivetran sync for this row.
+
+  - name: stg_ret_customers
+    description: >
+      Cleaned B2B retail customer accounts from retail.ret_customers. Soft-deleted records are
+      excluded and customer_start_date is explicitly cast to date. This model underpins B2B order
+      enrichment and support ticket analysis.
+    columns:
+      - name: customer_id
+        description: Surrogate primary key from the source (id column renamed for consistency).
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: Primary contact name at the B2B account.
+        tests:
+          - not_null
+      - name: company_name
+        description: Legal or trading name of the B2B company.
+        tests:
+          - not_null
+      - name: email
+        description: Primary contact email address.
+      - name: region
+        description: Geographic sales region the account is assigned to.
+      - name: customer_start_date
+        description: Date the B2B customer relationship began, cast to date.
+      - name: _fivetran_synced
+        description: Timestamp of the last Fivetran sync for this row.
+
+  - name: stg_ret_orders
+    description: >
+      Cleaned B2B retail orders from retail.ret_orders. Soft-deleted records are excluded,
+      amount is cast to numeric(18,2) for financial accuracy, and order_user_id is renamed
+      to customer_id for consistency across the project.
+    columns:
+      - name: order_id
+        description: Surrogate primary key from the source (id column renamed).
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key referencing stg_ret_customers.customer_id (renamed from order_user_id).
+        tests:
+          - not_null
+      - name: amount
+        description: Total order value cast to numeric(18,2).
+        tests:
+          - not_null
+      - name: status
+        description: Fulfillment status of the order.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['completed', 'cancelled', 'pending', 'processing', 'refunded']
+      - name: created_at
+        description: Timestamp when the order was placed.
+        tests:
+          - not_null
+      - name: cancel_return_reason
+        description: Reason for cancellation or return; null for non-cancelled orders.
+      - name: _fivetran_synced
+        description: Timestamp of the last Fivetran sync for this row.
+
+  - name: stg_ret_tickets
+    description: >
+      Cleaned B2B customer support tickets from retail.ret_tickets. Soft-deleted records are
+      excluded and ticket_user_id is renamed to customer_id for consistency. Used to analyze
+      support volume, issue types, and resolution rates by customer segment.
+    columns:
+      - name: ticket_id
+        description: Surrogate primary key from the source (id column renamed).
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Foreign key referencing stg_ret_customers.customer_id (renamed from ticket_user_id).
+        tests:
+          - not_null
+      - name: created_at
+        description: Timestamp when the ticket was opened.
+        tests:
+          - not_null
+      - name: issue_type
+        description: Category of the support issue.
+        tests:
+          - not_null
+      - name: status
+        description: Current resolution status of the ticket.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['open', 'closed', 'resolved', 'in_progress']
+      - name: _fivetran_synced
+        description: Timestamp of the last Fivetran sync for this row.
+
+  - name: stg_sales_orders
+    description: >
+      Cleaned e-commerce / B2C sales orders from retail.sales_orders. Soft-deleted records
+      are excluded, order_datetime is cast to timestamp, number_of_line_items to integer, and
+      a derived boolean has_promo flag indicates whether a promotional code was applied. This
+      model feeds the fct_orders mart for cross-channel order analysis.
+    columns:
+      - name: order_id
+        description: Surrogate primary key from the source (id column renamed).
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Business identifier of the B2C customer.
+        tests:
+          - not_null
+      - name: customer_name
+        description: Display name of the customer at order time.
+      - name: order_number
+        description: Human-readable order reference shown to the customer.
+        tests:
+          - unique
+          - not_null
+      - name: order_datetime
+        description: Timestamp when the order was submitted, cast to timestamp.
+        tests:
+          - not_null
+      - name: number_of_line_items
+        description: Count of distinct product line items in the order, cast to integer.
+      - name: clicked_items
+        description: JSON array of products clicked before purchase.
+      - name: ordered_products
+        description: JSON array of products included in the order.
+      - name: promo_info
+        description: Promotion code or campaign identifier; null if no promo applied.
+      - name: has_promo
+        description: Boolean flag; true when a promotional code was applied to this order.
+      - name: _fivetran_synced
+        description: Timestamp of the last Fivetran sync for this row.
