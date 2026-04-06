@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# dbt
+target/
+dbt_packages/
+logs/
+
+# credentials
+profiles.yml
+.env
+
+# Python
+__pycache__/
+*.pyc
