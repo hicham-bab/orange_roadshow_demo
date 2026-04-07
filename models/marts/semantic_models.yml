@@ -27,7 +27,8 @@ semantic_models:
         description: Whether the customer record is currently active (valid_to is null or in the future).
       - name: valid_from
         type: time
-        time_granularity: day
+        type_params:
+          time_granularity: day
         description: Start date of the customer record version; used for cohort and trend analysis.
     measures:
       - name: customer_count
@@ -71,8 +72,8 @@ semantic_models:
         description: Geographic region of the customer who placed the order.
       - name: order_date
         type: time
-        time_granularity: day
-        is_partition: true
+        type_params:
+          time_granularity: day
         description: Date the order was placed; used as the primary time dimension for trend analysis.
     measures:
       - name: order_count
@@ -124,8 +125,8 @@ semantic_models:
         description: Geographic region of the customer who opened the ticket.
       - name: created_date
         type: time
-        time_granularity: day
-        is_partition: true
+        type_params:
+          time_granularity: day
         expr: cast(created_at as date)
         description: Date the ticket was opened; derived from the created_at timestamp.
     measures:
