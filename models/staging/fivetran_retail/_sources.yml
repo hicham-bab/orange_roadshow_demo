@@ -7,13 +7,13 @@ sources:
       B2C customers, B2B retail customers, orders, and support tickets.
     database: HICHAMB_FIVETRAN_DEMO
     schema: retail
-    loaded_at_field: _fivetran_synced
-    freshness:
-      warn_after: {count: 7, period: hour}
-      error_after: {count: 13, period: hour}
 
     tables:
       - name: customers
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after: {count: 7, period: hour}
+          error_after: {count: 13, period: hour}
         description: >
           B2C (direct-to-consumer) customer master table. Each row represents a customer
           with demographic, geographic, and loyalty information. Customers may have
@@ -74,6 +74,10 @@ sources:
             description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
 
       - name: loyalty_segments
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after: {count: 7, period: hour}
+          error_after: {count: 13, period: hour}
         description: >
           Reference/lookup table defining the loyalty tier program. Each row describes a
           loyalty segment with its unit threshold (minimum units purchased to qualify) and
@@ -105,6 +109,10 @@ sources:
             description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
 
       - name: ret_customers
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after: {count: 7, period: hour}
+          error_after: {count: 13, period: hour}
         description: >
           B2B (business-to-business) retail customer accounts. Each row represents a company
           or business entity that places wholesale or retail orders. These customers have
@@ -135,6 +143,10 @@ sources:
             description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
 
       - name: ret_orders
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after: {count: 7, period: hour}
+          error_after: {count: 13, period: hour}
         description: >
           Retail (B2B) orders placed by ret_customers. Each row is a single order with
           an amount, status, and optional cancellation or return reason. Orders link
@@ -171,6 +183,10 @@ sources:
             description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
 
       - name: ret_tickets
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after: {count: 7, period: hour}
+          error_after: {count: 13, period: hour}
         description: >
           Customer support tickets raised by B2B retail customers. Each row represents
           a support interaction with an issue type, current status, and timestamp.
@@ -203,6 +219,10 @@ sources:
             description: Boolean flag set by Fivetran when the row has been soft-deleted in the source.
 
       - name: sales_orders
+        loaded_at_field: _fivetran_synced
+        freshness:
+          warn_after: {count: 7, period: hour}
+          error_after: {count: 13, period: hour}
         description: >
           E-commerce / B2C sales orders placed by direct consumers. Each row represents
           an online transaction with potentially multiple line items. The clicked_items
