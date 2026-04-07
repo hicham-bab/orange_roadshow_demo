@@ -130,7 +130,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['completed', 'cancelled', 'pending', 'processing', 'refunded']
+              arguments:
+                values: ['completed', 'cancelled', 'pending', 'processing', 'refunded']
       - name: created_at
         description: Timestamp when the order was placed.
         tests:
@@ -168,7 +169,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['open', 'closed', 'resolved', 'in_progress']
+              arguments:
+                values: ['open', 'closed', 'resolved', 'in_progress']
       - name: _fivetran_synced
         description: Timestamp of the last Fivetran sync for this row.
 

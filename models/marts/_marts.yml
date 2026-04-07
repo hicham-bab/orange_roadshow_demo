@@ -114,7 +114,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['b2b', 'b2c']
+              arguments:
+                values: ['b2b', 'b2c']
       - name: number_of_line_items
         description: Count of product line items in the order; populated for B2C orders, null for B2B.
       - name: has_promo
@@ -164,6 +165,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['open', 'closed', 'resolved', 'in_progress']
+              arguments:
+                values: ['open', 'closed', 'resolved', 'in_progress']
       - name: is_open
         description: Boolean flag; true when the ticket status is 'open' or 'in_progress'.

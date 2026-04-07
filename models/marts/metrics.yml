@@ -5,7 +5,8 @@ metrics:
       for B2B orders. Use order_type = 'b2b' as a filter when comparing to B2C volume metrics.
     type: simple
     type_params:
-      measure: total_revenue
+      measure:
+        name: total_revenue
 
   - name: order_count
     description: >
@@ -13,7 +14,8 @@ metrics:
       to break down by channel.
     type: simple
     type_params:
-      measure: order_count
+      measure:
+        name: order_count
 
   - name: customer_count
     description: >
@@ -21,7 +23,8 @@ metrics:
       to analyze customer distribution.
     type: simple
     type_params:
-      measure: customer_count
+      measure:
+        name: customer_count
 
   - name: avg_order_value
     description: >
@@ -29,7 +32,8 @@ metrics:
       are excluded from the average calculation automatically.
     type: simple
     type_params:
-      measure: avg_order_value
+      measure:
+        name: avg_order_value
 
   - name: ticket_count
     description: >
@@ -37,7 +41,8 @@ metrics:
       status, or region for support workload analysis.
     type: simple
     type_params:
-      measure: ticket_count
+      measure:
+        name: ticket_count
 
   - name: open_ticket_rate
     description: >
@@ -46,8 +51,10 @@ metrics:
       increasing customer issues. Calculated as open_ticket_count / ticket_count.
     type: ratio
     type_params:
-      numerator: open_ticket_count
-      denominator: ticket_count
+      numerator:
+        name: open_ticket_count
+      denominator:
+        name: ticket_count
 
   - name: cancellation_rate
     description: >
@@ -56,8 +63,10 @@ metrics:
       Calculated as cancelled_order_count / order_count.
     type: ratio
     type_params:
-      numerator: cancelled_order_count
-      denominator: order_count
+      numerator:
+        name: cancelled_order_count
+      denominator:
+        name: order_count
 
   - name: revenue_per_customer
     description: >
@@ -66,7 +75,7 @@ metrics:
       Calculated as total_revenue divided by customer_count.
     type: derived
     type_params:
-      expr: "{{ metric('total_revenue') }} / {{ metric('customer_count') }}"
+      expr: "total_revenue / customer_count"
       metrics:
         - name: total_revenue
         - name: customer_count
