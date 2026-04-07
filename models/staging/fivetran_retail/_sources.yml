@@ -7,6 +7,10 @@ sources:
       B2C customers, B2B retail customers, orders, and support tickets.
     database: HICHAMB_FIVETRAN_DEMO
     schema: retail
+    quoting:
+      database: false
+      schema: true
+      identifier: false
 
     tables:
       - name: customers
