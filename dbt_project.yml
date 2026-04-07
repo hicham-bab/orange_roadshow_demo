@@ -10,6 +10,11 @@ test-paths: ["tests"]
 analysis-paths: ["analyses"]
 macro-paths: ["macros"]
 
+quoting:
+  database: false
+  schema: true
+  identifier: false
+
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
