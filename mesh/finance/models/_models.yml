@@ -1,0 +1,108 @@
+models:
+  - name: fin_revenue_monthly
+    description: >
+      Monthly B2B revenue summary derived from fct_orders (order_type = 'b2b').
+      Each row represents one calendar month with order volumes, total revenue,
+      cancellation counts, cancellation rate, and average order value. Used by
+      finance for monthly close reporting and revenue trend analysis.
+    columns:
+      - name: order_month
+        description: First day of the calendar month for this aggregation period.
+        tests:
+          - not_null
+          - unique
+      - name: order_count
+        description: Total number of B2B orders placed in this month.
+        tests:
+          - not_null
+      - name: total_revenue
+        description: Sum of order_amount for all B2B orders in this month.
+        tests:
+          - not_null
+      - name: cancelled_orders
+        description: Count of B2B orders with order_status = 'cancelled' in this month.
+        tests:
+          - not_null
+      - name: cancellation_rate
+        description: Ratio of cancelled orders to total orders (0.0 to 1.0).
+      - name: avg_order_value
+        description: Average order_amount for B2B orders in this month.
+
+  - name: fin_cancellation_analysis
+    description: >
+      Order count and amount breakdown by region, order_type, and order_status.
+      Analysts filter this model for order_status = 'cancelled' to analyse
+      cancellation patterns. Derived from fct_orders.
+    columns:
+      - name: region
+        description: Geographic sales region of the orders.
+        tests:
+          - not_null
+      - name: order_type
+        description: Channel indicator — 'b2b' for retail orders, 'b2c' for e-commerce sales orders.
+        tests:
+          - not_null
+      - name: order_status
+        description: Fulfillment or completion status of the orders in this group.
+        tests:
+          - not_null
+      - name: order_count
+        description: Number of orders matching this region / order_type / order_status combination.
+        tests:
+          - not_null
+      - name: total_order_amount
+        description: Sum of order_amount for orders in this group.
+      - name: avg_order_amount
+        description: Average order_amount for orders in this group.
+
+  - name: fin_b2b_customer_value
+    description: >
+      Customer-level B2B value and health analysis joining fct_orders and
+      fct_support_tickets. Each row represents a B2B customer with revenue totals,
+      cancellation metrics, support ticket counts, and a derived customer_health_score
+      ('healthy', 'needs_attention', 'at_risk'). Used by finance and customer success
+      teams to prioritise at-risk account reviews.
+    columns:
+      - name: customer_id
+        description: Business-facing customer identifier from the source system.
+        tests:
+          - not_null
+          - unique
+      - name: customer_name
+        description: Display name of the customer account.
+        tests:
+          - not_null
+      - name: region
+        description: Geographic sales region of the customer account.
+      - name: total_orders
+        description: Total number of B2B orders placed by this customer.
+        tests:
+          - not_null
+      - name: total_revenue
+        description: Sum of order_amount across all B2B orders for this customer.
+      - name: avg_order_value
+        description: Average order_amount for this customer's B2B orders.
+      - name: cancelled_orders
+        description: Count of B2B orders with order_status = 'cancelled' for this customer.
+        tests:
+          - not_null
+      - name: cancellation_rate
+        description: Ratio of cancelled orders to total orders for this customer (0.0 to 1.0).
+      - name: support_tickets
+        description: Total number of support tickets opened by this customer.
+        tests:
+          - not_null
+      - name: open_tickets
+        description: Count of support tickets with is_open = true for this customer.
+        tests:
+          - not_null
+      - name: customer_health_score
+        description: >
+          Derived health classification: 'at_risk' when cancellation_rate > 0.3 or
+          open_tickets > 2; 'needs_attention' when cancellation_rate > 0.1 or
+          open_tickets > 0; otherwise 'healthy'.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['healthy', 'needs_attention', 'at_risk']

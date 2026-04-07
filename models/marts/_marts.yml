@@ -5,80 +5,111 @@ models:
       Each row represents a single customer version with a surrogate key, active flag,
       geographic attributes, and loyalty tier metadata. This is the primary customer
       dimension used by analysts and the semantic layer for customer-level analysis.
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: customer_key
         description: >
           Surrogate key generated from customer_id using dbt_utils.generate_surrogate_key.
           Stable identifier for joining to fact tables.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: customer_id
         description: Business-facing customer identifier from the source system.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: customer_name
         description: Full display name of the customer.
+        data_type: varchar
         tests:
           - not_null
       - name: city
         description: City of the customer address.
+        data_type: varchar
       - name: region
         description: Geographic sales region in uppercase (e.g., WEST, EAST, CENTRAL).
+        data_type: varchar
       - name: state
         description: State or province of the customer.
+        data_type: varchar
       - name: lat
         description: Latitude coordinate of the customer location.
+        data_type: number
       - name: lon
         description: Longitude coordinate of the customer location.
+        data_type: number
       - name: loyalty_segment
         description: Loyalty tier name (e.g., Gold, Silver, Bronze).
+        data_type: varchar
       - name: loyalty_segment_description
         description: Full descriptive label of the loyalty tier.
+        data_type: varchar
       - name: unit_threshold
         description: Minimum cumulative units needed to achieve this loyalty tier.
+        data_type: integer
       - name: units_purchased
         description: Total units purchased by this customer, used for loyalty qualification.
+        data_type: integer
       - name: valid_from
         description: Start date of this customer record version.
+        data_type: date
       - name: valid_to
         description: End date of this record version; null for currently active records.
+        data_type: date
       - name: ship_to_address
         description: Full formatted shipping address for the customer.
+        data_type: varchar
       - name: is_active
         description: >
           Boolean flag indicating whether this customer record is currently active.
           True when valid_to is null or valid_to is on or after today's date.
+        data_type: boolean
 
   - name: dim_loyalty_segments
     description: >
       Dimension table for loyalty tier definitions. This reference table describes each
       loyalty segment, its qualifying unit threshold, and validity window. Use this model
       to filter or group customers by loyalty tier without joining back through customers.
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: loyalty_segment_key
         description: Surrogate key generated from loyalty_segment_id.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: loyalty_segment_id
         description: Business identifier for the loyalty segment.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: loyalty_segment_description
         description: Full descriptive label of the loyalty tier.
+        data_type: varchar
         tests:
           - not_null
       - name: unit_threshold
         description: Minimum cumulative units purchased to qualify for this tier.
+        data_type: integer
       - name: valid_from
         description: Date this segment definition became effective.
+        data_type: date
       - name: valid_to
         description: Date this segment definition expires; null means currently active.
+        data_type: date
       - name: is_current
         description: Boolean flag; true when this loyalty segment definition is currently in effect.
+        data_type: boolean
 
   - name: fct_orders
     description: >
@@ -87,30 +118,42 @@ models:
       B2B orders carry monetary amount, cancellation reasons, and customer account metadata.
       B2C orders carry line item counts and promotional flags. This is the primary orders
       fact table consumed by revenue, volume, and cancellation analyses.
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: order_key
         description: Surrogate primary key generated from order_id and order_type to ensure global uniqueness.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: order_id
         description: Source system order identifier (unique within each order_type channel).
+        data_type: varchar
         tests:
           - not_null
       - name: customer_id
         description: Customer identifier; references B2B ret_customers.id or B2C customers.customer_id depending on order_type.
+        data_type: varchar
       - name: customer_name
         description: Display name of the customer at the time of the order.
+        data_type: varchar
       - name: order_date
         description: Date/timestamp when the order was placed.
+        data_type: timestamp_ntz
         tests:
           - not_null
       - name: order_amount
         description: Total monetary value of the order; null for B2C orders where amount is not captured at the order level.
+        data_type: number
       - name: order_status
         description: Fulfillment or completion status of the order.
+        data_type: varchar
       - name: order_type
         description: Channel indicator — 'b2b' for retail orders, 'b2c' for e-commerce sales orders.
+        data_type: varchar
         tests:
           - not_null
           - accepted_values:
@@ -118,12 +161,16 @@ models:
                 values: ['b2b', 'b2c']
       - name: number_of_line_items
         description: Count of product line items in the order; populated for B2C orders, null for B2B.
+        data_type: integer
       - name: has_promo
         description: Boolean flag; true when a promotional code was applied. Applicable to B2C orders only.
+        data_type: boolean
       - name: cancel_return_reason
         description: Reason for cancellation or return; populated for B2B orders only.
+        data_type: varchar
       - name: region
         description: Geographic region associated with the customer who placed the order.
+        data_type: varchar
 
   - name: fct_support_tickets
     description: >
@@ -131,37 +178,50 @@ models:
       Each row represents a single support ticket with its issue type, current status, and
       a derived is_open flag for tracking active ticket volume. Used to analyze support
       workload, resolution rates, and identify high-risk customer accounts.
+    access: public
+    config:
+      contract:
+        enforced: true
     columns:
       - name: ticket_key
         description: Surrogate primary key generated from ticket_id.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: ticket_id
         description: Source system ticket identifier.
+        data_type: varchar
         tests:
           - unique
           - not_null
       - name: customer_id
         description: Foreign key referencing the B2B customer who opened the ticket.
+        data_type: varchar
         tests:
           - not_null
       - name: customer_name
         description: Primary contact name at the customer account.
+        data_type: varchar
       - name: company_name
         description: Company name of the B2B customer.
+        data_type: varchar
       - name: region
         description: Geographic region of the customer account.
+        data_type: varchar
       - name: created_at
         description: Timestamp when the ticket was opened.
+        data_type: timestamp_ntz
         tests:
           - not_null
       - name: issue_type
         description: Category or classification of the support issue.
+        data_type: varchar
         tests:
           - not_null
       - name: status
         description: Current resolution status of the ticket.
+        data_type: varchar
         tests:
           - not_null
           - accepted_values:
@@ -169,3 +229,4 @@ models:
                 values: ['open', 'closed', 'resolved', 'in_progress']
       - name: is_open
         description: Boolean flag; true when the ticket status is 'open' or 'in_progress'.
+        data_type: boolean

@@ -1,0 +1,14 @@
+name: retail_marketing
+version: '1.0.0'
+require-dbt-version: [">=1.9.0"]
+
+profile: retail_demo
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  retail_marketing:
+    +materialized: table
+    +schema: marketing
