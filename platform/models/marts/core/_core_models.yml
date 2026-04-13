@@ -45,6 +45,15 @@ models:
         dimension:
           type: categorical
 
+      - name: district
+        data_type: varchar
+
+      - name: postcode
+        data_type: varchar
+
+      - name: ship_to_address
+        data_type: varchar
+
       - name: loyalty_segment_id
         data_type: number
 
@@ -86,6 +95,9 @@ models:
         dimension:
           type: time
 
+      - name: customer_number
+        data_type: varchar
+
     metrics:
       - name: total_customers
         label: "Total Customers"
@@ -122,13 +134,25 @@ models:
         data_type: varchar
       - name: customer_start_date
         data_type: date
-      - name: total_revenue
-        data_type: number
       - name: total_orders
         data_type: number
-      - name: return_rate
+      - name: total_revenue
+        data_type: number
+      - name: cancelled_revenue
+        data_type: number
+      - name: cancelled_orders
+        data_type: number
+      - name: last_order_date
+        data_type: date
+      - name: total_tickets
         data_type: number
       - name: open_tickets
+        data_type: number
+      - name: billing_tickets
+        data_type: number
+      - name: delivery_tickets
+        data_type: number
+      - name: return_rate
         data_type: number
       - name: health_score
         description: 0-100 score. Penalised for open tickets and high return rate.
@@ -201,6 +225,10 @@ models:
               arguments:
                 min_value: 0
 
+      - name: parsed_line_items
+        description: Number of line items successfully parsed from ORDERED_PRODUCTS JSON.
+        data_type: number
+
       - name: promo_code
         data_type: varchar
 
@@ -210,6 +238,10 @@ models:
         dimension:
           type: categorical
           description: Whether a promo code was applied.
+
+      - name: has_unparsed_products
+        description: True if ORDERED_PRODUCTS JSON could not be parsed for this order.
+        data_type: boolean
 
     metrics:
       - name: total_b2c_revenue
