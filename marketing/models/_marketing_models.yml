@@ -10,7 +10,8 @@ models:
       - name: campaign_segment
         tests:
           - accepted_values:
-              values: ['vip_retention', 'upgrade_candidate', 'win_back', 'standard_nurture']
+              arguments:
+                values: ['vip_retention', 'upgrade_candidate', 'win_back', 'standard_nurture']
 
   - name: regional_performance
     description: >
