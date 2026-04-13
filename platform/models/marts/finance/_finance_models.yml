@@ -5,6 +5,7 @@ models:
       AMOUNT is a clean numeric field from the source — no parsing required.
       Includes status classification for return/cancellation analysis.
     config:
+      access: public
       contract:
         enforced: true
 
