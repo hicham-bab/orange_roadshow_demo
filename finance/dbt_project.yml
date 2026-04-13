@@ -1,0 +1,13 @@
+name: harmony_finance_reporting
+version: '1.0.0'
+
+profile: harmony_finance_reporting
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  harmony_finance_reporting:
+    +materialized: table
+    +schema: finance

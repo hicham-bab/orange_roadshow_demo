@@ -1,0 +1,98 @@
+# =============================================================================
+# Cortex Analyst Semantic Model — RAW DATA (Legacy stage-based YAML)
+# =============================================================================
+# Backup format if your Snowflake account doesn't support Semantic Views DDL.
+# Upload to a stage and reference when calling Cortex Analyst.
+#
+# To upload:
+#   PUT file://snowflake/01_cortex_raw_semantic_model.yaml @MY_STAGE auto_compress=false;
+# =============================================================================
+
+name: fretwork_raw
+description: >
+  Raw Shopify data for Fretwork Guitars. Minimal descriptions.
+  Use for demonstrating ungoverned AI queries.
+
+tables:
+  - name: orders
+    base_table:
+      database: FRETWORK_GUITARS
+      schema: RAW_SHOPIFY
+      table: ORDER
+    description: Shopify orders table
+    columns:
+      - name: ID
+        data_type: NUMBER
+        description: Order ID
+      - name: TOTAL_PRICE
+        data_type: NUMBER
+        description: Total price
+      - name: SUBTOTAL_PRICE
+        data_type: NUMBER
+        description: Subtotal
+      - name: TOTAL_DISCOUNTS
+        data_type: NUMBER
+        description: Discounts
+      - name: FINANCIAL_STATUS
+        data_type: VARCHAR
+        description: Status
+      - name: CREATED_AT
+        data_type: TIMESTAMP_NTZ
+        description: Created at
+      - name: CUSTOMER_ID
+        data_type: NUMBER
+        description: Customer ID
+    time_dimensions:
+      - name: CREATED_AT
+        data_type: TIMESTAMP_NTZ
+        description: Order date
+
+  - name: customers
+    base_table:
+      database: FRETWORK_GUITARS
+      schema: RAW_SHOPIFY
+      table: CUSTOMER
+    description: Shopify customers
+    columns:
+      - name: ID
+        data_type: NUMBER
+        description: Customer ID
+      - name: EMAIL
+        data_type: VARCHAR
+        description: Email
+      - name: TOTAL_SPENT
+        data_type: NUMBER
+        description: Total spent (may differ from orders table)
+      - name: DEFAULT_ADDRESS_COUNTRY
+        data_type: VARCHAR
+        description: Country
+
+  - name: products
+    base_table:
+      database: FRETWORK_GUITARS
+      schema: RAW_SHOPIFY
+      table: PRODUCT
+    description: Products
+    columns:
+      - name: ID
+        data_type: NUMBER
+        description: Product ID
+      - name: TITLE
+        data_type: VARCHAR
+        description: Title
+      - name: PRODUCT_TYPE
+        data_type: VARCHAR
+        description: Type
+      - name: STATUS
+        data_type: VARCHAR
+        description: Status
+
+relationships:
+  - name: orders_to_customers
+    left_table: orders
+    right_table: customers
+    relationship_columns:
+      - left_column: CUSTOMER_ID
+        right_column: ID
+    join_type: left_outer
+    relationship_type: many_to_one

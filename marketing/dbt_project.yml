@@ -1,0 +1,13 @@
+name: harmony_marketing
+version: '1.0.0'
+
+profile: harmony_marketing
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  harmony_marketing:
+    +materialized: table
+    +schema: marketing

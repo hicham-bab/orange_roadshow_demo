@@ -1,0 +1,24 @@
+models:
+  - name: consolidated_revenue
+    description: >
+      Unified B2C + B2B revenue for financial reporting. Consumes
+      fct_sales_orders and fct_b2b_orders from the core platform project
+      via dbt Mesh cross-project references. Single source of truth for total revenue.
+    columns:
+      - name: order_id
+        tests: [not_null]
+      - name: net_revenue
+        description: Revenue net of cancellations/returns. Zero for cancelled orders.
+
+  - name: b2b_account_health_report
+    description: >
+      B2B account risk assessment for AR provisioning and credit reviews.
+      Consumes dim_b2b_customers and fct_b2b_orders from the core platform
+      via dbt Mesh.
+    columns:
+      - name: b2b_customer_id
+        tests: [unique, not_null]
+      - name: finance_risk_tier
+        tests:
+          - accepted_values:
+              values: ['high_risk', 'elevated_risk', 'monitor', 'standard']

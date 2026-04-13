@@ -1,0 +1,83 @@
+models:
+  - name: fct_b2b_orders
+    description: >
+      B2B retail order fact table. Grain: one row per order.
+      AMOUNT is a clean numeric field from the source — no parsing required.
+      Includes status classification for return/cancellation analysis.
+    access: public
+    config:
+      contract:
+        enforced: true
+
+    semantic_model:
+      enabled: true
+
+    agg_time_dimension: order_date
+
+    columns:
+      - name: order_id
+        data_type: number
+        constraints: [{type: not_null}, {type: primary_key}]
+        tests: [unique, not_null]
+        entity:
+          type: primary
+          name: b2b_order
+
+      - name: b2b_customer_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_b2b_customers')
+              field: b2b_customer_id
+        entity:
+          type: foreign
+          name: b2b_customer
+
+      - name: order_date
+        data_type: date
+        tests: [not_null]
+        granularity: day
+        dimension:
+          type: time
+
+      - name: amount
+        data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: status
+        data_type: varchar
+        dimension:
+          type: categorical
+
+      - name: is_cancelled_or_returned
+        data_type: boolean
+        dimension:
+          type: categorical
+
+      - name: cancel_return_reason
+        data_type: varchar
+
+    metrics:
+      - name: total_b2b_orders
+        label: "Total B2B Orders"
+        description: Total number of B2B orders.
+        type: simple
+        agg: count
+        expr: order_id
+
+      - name: total_b2b_revenue
+        label: "Total B2B Revenue"
+        description: Total B2B order revenue (USD).
+        type: simple
+        agg: sum
+        expr: amount
+
+      - name: b2b_cancelled_amount
+        label: "B2B Cancelled Amount"
+        description: Revenue lost to cancellations and returns (USD).
+        type: simple
+        agg: sum
+        expr: "case when is_cancelled_or_returned then amount else 0 end"
