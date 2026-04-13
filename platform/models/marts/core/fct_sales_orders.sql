@@ -37,3 +37,4 @@ select
      and o.ordered_products_raw is not null) as has_unparsed_products
 from orders o
 left join order_revenue r on r.order_id = o.order_id
+where o.order_date is not null
