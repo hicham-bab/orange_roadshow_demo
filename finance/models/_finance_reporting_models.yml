@@ -21,4 +21,5 @@ models:
       - name: finance_risk_tier
         tests:
           - accepted_values:
-              values: ['high_risk', 'elevated_risk', 'monitor', 'standard']
+              arguments:
+                values: ['high_risk', 'elevated_risk', 'monitor', 'standard']

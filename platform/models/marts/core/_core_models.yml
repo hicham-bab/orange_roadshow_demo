@@ -68,7 +68,8 @@ models:
         data_type: varchar
         tests:
           - accepted_values:
-              values: ['high_value', 'mid_value', 'low_value']
+              arguments:
+                values: ['high_value', 'mid_value', 'low_value']
         dimension:
           type: categorical
           description: "Value segment: high_value (top 20%), mid_value, low_value."
@@ -137,7 +138,8 @@ models:
         data_type: varchar
         tests:
           - accepted_values:
-              values: ['healthy', 'needs_attention', 'at_risk']
+              arguments:
+                values: ['healthy', 'needs_attention', 'at_risk']
 
   - name: fct_sales_orders
     description: >
@@ -171,8 +173,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dim_customers')
-              field: customer_id
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
         entity:
           type: foreign
           name: customer
@@ -195,7 +198,8 @@ models:
         data_type: number
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
+              arguments:
+                min_value: 0
 
       - name: promo_code
         data_type: varchar
