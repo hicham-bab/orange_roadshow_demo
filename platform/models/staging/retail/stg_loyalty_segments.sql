@@ -12,4 +12,4 @@ select
     valid_from,
     valid_to
 from {{ source('retail', 'loyalty_segments') }}
-where (_fivetran_deleted is false or _fivetran_deleted is null)
+where (not _fivetran_deleted or _fivetran_deleted is null)

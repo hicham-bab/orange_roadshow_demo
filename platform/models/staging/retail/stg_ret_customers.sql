@@ -13,4 +13,4 @@ select
     customer_start_date,
     _fivetran_synced
 from {{ source('retail', 'ret_customers') }}
-where (_fivetran_deleted is false or _fivetran_deleted is null)
+where (not _fivetran_deleted or _fivetran_deleted is null)

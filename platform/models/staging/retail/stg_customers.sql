@@ -45,4 +45,4 @@ select
 
     _fivetran_synced
 from {{ source('retail', 'customers') }}
-where (_fivetran_deleted is false or _fivetran_deleted is null)
+where (not _fivetran_deleted or _fivetran_deleted is null)

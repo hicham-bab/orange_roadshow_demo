@@ -7,10 +7,6 @@ sources:
     database: "{{ var('retail_database', 'HICHAMB_FIVETRAN_DEMO') }}"
     schema: "{{ var('retail_schema', 'RETAIL_DEMO_RETAIL') }}"
     loader: fivetran
-    loaded_at_field: _fivetran_synced
-    freshness:
-      warn_after:  {count: 12, period: hour}
-      error_after: {count: 48, period: hour}
 
     tables:
 

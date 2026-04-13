@@ -4,7 +4,6 @@ models:
       B2B retail order fact table. Grain: one row per order.
       AMOUNT is a clean numeric field from the source — no parsing required.
       Includes status classification for return/cancellation analysis.
-    access: public
     config:
       contract:
         enforced: true
