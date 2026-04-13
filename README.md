@@ -55,7 +55,7 @@ This repo contains **3 independent dbt projects** connected via dbt Mesh:
 orange_roadshow_dbt/
 |
 |-- platform/                  # PRODUCER: Core data platform
-|   |-- dbt_project.yml        #   Project: fretwork_guitars
+|   |-- dbt_project.yml        #   Project: harmony_central_data
 |   |-- packages.yml           #   dbt_utils, dbt_expectations, semantic_view
 |   |-- profiles.yml.example
 |   |-- models/
@@ -69,15 +69,15 @@ orange_roadshow_dbt/
 |
 |-- marketing/                 # CONSUMER: Marketing analytics team
 |   |-- dbt_project.yml        #   Project: harmony_marketing
-|   |-- dependencies.yml       #   Depends on: fretwork_guitars
+|   |-- dependencies.yml       #   Depends on: harmony_central_data
 |   |-- profiles.yml.example
 |   +-- models/
 |       |-- loyalty_campaign_targets.sql   # Campaign segmentation
 |       +-- regional_performance.sql       # Geo/monthly performance
 |
 |-- finance/                   # CONSUMER: Finance reporting team
-|   |-- dbt_project.yml        #   Project: harmony_finance_reporting
-|   |-- dependencies.yml       #   Depends on: fretwork_guitars
+|   |-- dbt_project.yml        #   Project: harmony_finance
+|   |-- dependencies.yml       #   Depends on: harmony_central_data
 |   |-- profiles.yml.example
 |   +-- models/
 |       |-- consolidated_revenue.sql       # Unified B2C + B2B revenue
@@ -93,8 +93,8 @@ orange_roadshow_dbt/
 | Concept | Implementation |
 |---------|---------------|
 | **Producer** | `platform/` publishes 4 mart models with `access: public` and enforced data contracts |
-| **Consumers** | `marketing/` and `finance/` reference upstream models via `ref('fretwork_guitars', 'model_name')` |
-| **Dependencies** | Each consumer declares `dependencies.yml` pointing to `fretwork_guitars` |
+| **Consumers** | `marketing/` and `finance/` reference upstream models via `ref('harmony_central_data', 'model_name')` |
+| **Dependencies** | Each consumer declares `dependencies.yml` pointing to `harmony_central_data` |
 | **Contracts** | All public models enforce column types and constraints — breaking changes are caught at build time |
 | **Groups** | Platform models are organized into `core` (Data Eng) and `finance` (Finance Analytics) groups |
 
