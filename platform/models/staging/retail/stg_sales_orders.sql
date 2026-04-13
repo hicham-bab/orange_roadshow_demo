@@ -14,9 +14,9 @@ select
     customer_id,
     customer_name,
 
-    -- Convert epoch to usable datetime
-    to_timestamp(order_datetime)                    as order_timestamp,
-    to_timestamp(order_datetime)::date              as order_date,
+    -- Convert epoch to usable datetime (nullif handles zero/missing epochs)
+    to_timestamp(nullif(order_datetime, 0))         as order_timestamp,
+    to_timestamp(nullif(order_datetime, 0))::date   as order_date,
 
     -- Parse ORDERED_PRODUCTS into a JSON variant for FLATTEN() downstream
     -- TRY_PARSE_JSON returns NULL if not valid JSON rather than failing
