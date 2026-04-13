@@ -1,7 +1,7 @@
-name: fretwork_guitars
+name: harmony_central_data
 version: '1.0.0'
 
-profile: fretwork_guitars
+profile: harmony_central_data
 
 model-paths:    ["models"]
 seed-paths:     ["seeds"]
@@ -18,7 +18,7 @@ vars:
   retail_schema:   RETAIL_DEMO_RETAIL
 
 models:
-  fretwork_guitars:
+  harmony_central_data:
     staging:
       +materialized: view
       +schema: staging

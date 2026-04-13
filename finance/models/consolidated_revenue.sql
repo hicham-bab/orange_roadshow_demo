@@ -17,7 +17,7 @@ with b2c_revenue as (
         has_promo,
         'B2C'                   as channel,
         false                   as is_cancelled_or_returned
-    from {{ ref('fretwork_guitars', 'fct_sales_orders') }}
+    from {{ ref('harmony_central_data', 'fct_sales_orders') }}
 ),
 
 b2b_revenue as (
@@ -29,7 +29,7 @@ b2b_revenue as (
         false                   as has_promo,
         'B2B'                   as channel,
         is_cancelled_or_returned
-    from {{ ref('fretwork_guitars', 'fct_b2b_orders') }}
+    from {{ ref('harmony_central_data', 'fct_b2b_orders') }}
 )
 
 select
