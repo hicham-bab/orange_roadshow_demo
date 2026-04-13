@@ -14,19 +14,8 @@ target-path:   "target"
 clean-targets: ["target", "dbt_packages"]
 
 vars:
-  # Fivetran Google Cloud SQL → Snowflake destination
   retail_database: HICHAMB_FIVETRAN_DEMO
   retail_schema:   RETAIL_DEMO_RETAIL
-
-groups:
-  - name: core
-    owner:
-      name: Data Engineering
-      email: data-eng@harmonymusic.com
-  - name: finance
-    owner:
-      name: Finance Analytics
-      email: finance-analytics@harmonymusic.com
 
 models:
   fretwork_guitars:
@@ -41,14 +30,12 @@ models:
       core:
         +materialized: table
         +schema: marts
-        +group: core
         +persist_docs:
           relation: true
           columns: true
       finance:
         +materialized: table
         +schema: marts
-        +group: finance
         +persist_docs:
           relation: true
           columns: true
@@ -56,13 +43,3 @@ models:
     semantic:
       +materialized: table
       +schema: semantic
-
-    semantic_views:
-      +schema: marts
-
-semantic-layer:
-  time-spine:
-    standard:
-      columns:
-        - name: date_day
-          granularity: day
