@@ -1,4 +1,4 @@
-harmony_finance_reporting:
+harmony_finance:
   target: dev
   outputs:
     dev:

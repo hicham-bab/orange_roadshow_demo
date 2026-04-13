@@ -6,7 +6,7 @@
 */
 
 with accounts as (
-    select * from {{ ref('fretwork_guitars', 'dim_b2b_customers') }}
+    select * from {{ ref('harmony_central_data', 'dim_b2b_customers') }}
 ),
 
 orders as (
@@ -15,7 +15,7 @@ orders as (
         count(*)                                            as recent_orders,
         sum(amount)                                         as recent_revenue,
         sum(case when is_cancelled_or_returned then amount else 0 end) as recent_cancelled
-    from {{ ref('fretwork_guitars', 'fct_b2b_orders') }}
+    from {{ ref('harmony_central_data', 'fct_b2b_orders') }}
     where order_date >= dateadd('month', -6, current_date)
     group by b2b_customer_id
 )

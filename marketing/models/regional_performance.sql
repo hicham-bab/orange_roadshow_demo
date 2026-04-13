@@ -6,11 +6,11 @@
 */
 
 with orders as (
-    select * from {{ ref('fretwork_guitars', 'fct_sales_orders') }}
+    select * from {{ ref('harmony_central_data', 'fct_sales_orders') }}
 ),
 
 customers as (
-    select * from {{ ref('fretwork_guitars', 'dim_customers') }}
+    select * from {{ ref('harmony_central_data', 'dim_customers') }}
 )
 
 select
