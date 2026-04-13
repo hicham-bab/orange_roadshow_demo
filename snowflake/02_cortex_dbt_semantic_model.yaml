@@ -1,0 +1,226 @@
+# =============================================================================
+# Cortex Analyst Semantic Model — dbt MARTS (Legacy stage-based YAML)
+# =============================================================================
+# Backup format if your Snowflake account doesn't support Semantic Views DDL.
+# Upload to a stage and reference when calling Cortex Analyst.
+#
+# To upload:
+#   PUT file://snowflake/02_cortex_dbt_semantic_model.yaml @MY_STAGE auto_compress=false;
+# =============================================================================
+
+name: fretwork_dbt
+description: >
+  Governed semantic model for Fretwork Guitars built on dbt mart tables.
+  Revenue, customers, and product metrics with clear business definitions.
+  All measures include refund/return business logic. Use this for AI queries.
+
+tables:
+  - name: fct_revenue
+    base_table:
+      database: FRETWORK_GUITARS
+      schema: MARTS
+      table: FCT_REVENUE
+    description: >
+      Order-level revenue fact table governed by dbt. One row per order.
+      amount_paid is the source of truth for revenue (uses Stripe net where available).
+      recognised_revenue excludes returns and cancellations.
+    measures:
+      - name: total_revenue
+        expr: SUM(AMOUNT_PAID)
+        description: Total revenue across all orders (USD). Includes all payment statuses.
+        default_aggregation: sum
+        synonyms: ["total sales", "gross revenue", "sales"]
+      - name: recognised_revenue
+        expr: SUM(RECOGNISED_REVENUE)
+        description: >
+          Revenue from completed, paid, fulfilled orders only (USD).
+          Excludes pending, cancelled, and refunded orders.
+        default_aggregation: sum
+        synonyms: ["net revenue", "booked revenue", "recognised sales"]
+      - name: total_returned
+        expr: SUM(RETURNED_AMOUNT)
+        description: Total amount returned via refunds (USD).
+        default_aggregation: sum
+        synonyms: ["refunds", "returns"]
+      - name: order_count
+        expr: COUNT(ORDER_ID)
+        description: Number of orders.
+        default_aggregation: count
+        synonyms: ["orders", "number of orders"]
+      - name: avg_order_value
+        expr: SUM(AMOUNT_PAID) / NULLIF(COUNT(ORDER_ID), 0)
+        description: Average order value (USD).
+        default_aggregation: mean
+        synonyms: ["AOV", "average order", "average basket size"]
+    columns:
+      - name: ORDER_ID
+        data_type: NUMBER
+        description: Unique order identifier. Primary key.
+      - name: CUSTOMER_ID
+        data_type: NUMBER
+        description: Customer ID. Foreign key to dim_customers.
+      - name: ORDER_DATE
+        data_type: DATE
+        description: Date the order was placed.
+        synonyms: ["date", "purchase date", "transaction date"]
+      - name: ORDER_MONTH
+        data_type: DATE
+        description: First day of the month the order was placed.
+      - name: FINANCIAL_STATUS
+        data_type: VARCHAR
+        description: >
+          Payment status: paid, pending, refunded, partially_refunded, voided.
+          Filter to 'paid' for revenue analysis.
+        synonyms: ["payment status", "order status", "status"]
+      - name: FULFILLMENT_STATUS
+        data_type: VARCHAR
+        description: Fulfillment status. Filter to 'fulfilled' for recognised revenue.
+      - name: PAYMENT_METHOD_TYPE
+        data_type: VARCHAR
+        description: Payment method used (card, bank_transfer, etc.).
+        synonyms: ["payment method", "how paid"]
+      - name: AMOUNT_PAID
+        data_type: NUMBER
+        description: Total amount paid for this order (USD). Source of truth for revenue.
+        synonyms: ["revenue", "sales", "order value"]
+      - name: RECOGNISED_REVENUE
+        data_type: NUMBER
+        description: Revenue recognised (paid + fulfilled + not cancelled orders only).
+      - name: RETURNED_AMOUNT
+        data_type: NUMBER
+        description: Amount refunded for this order (USD). 0 for non-refunded orders.
+    time_dimensions:
+      - name: ORDER_DATE
+        data_type: DATE
+        description: Order date. Use for trend analysis.
+
+  - name: dim_customers
+    base_table:
+      database: FRETWORK_GUITARS
+      schema: MARTS
+      table: DIM_CUSTOMERS
+    description: >
+      Customer 360 dimension. One row per customer. Includes LTV, segment,
+      and order history. customer_segment classifies customers by lifetime value.
+    columns:
+      - name: CUSTOMER_ID
+        data_type: NUMBER
+        description: Unique Shopify customer ID. Primary key.
+      - name: FULL_NAME
+        data_type: VARCHAR
+        description: Customer full name.
+        synonyms: ["name", "customer", "customer name"]
+      - name: EMAIL
+        data_type: VARCHAR
+        description: Customer email address.
+      - name: COUNTRY
+        data_type: VARCHAR
+        description: Customer country.
+        synonyms: ["location", "region"]
+      - name: CUSTOMER_SEGMENT
+        data_type: VARCHAR
+        description: >
+          Customer value segment: high_value (LTV >= $500), mid_value ($100-$499),
+          low_value (< $100). Defined and governed by dbt.
+        synonyms: ["segment", "tier", "value tier"]
+      - name: TOTAL_LIFETIME_VALUE
+        data_type: NUMBER
+        description: Total amount spent by this customer (USD).
+        synonyms: ["LTV", "lifetime value", "CLV", "customer value"]
+      - name: NUMBER_OF_ORDERS
+        data_type: NUMBER
+        description: Total orders placed.
+      - name: FAVOURITE_CATEGORY
+        data_type: VARCHAR
+        description: Product category this customer has spent most on.
+
+  - name: dim_products
+    base_table:
+      database: FRETWORK_GUITARS
+      schema: MARTS
+      table: DIM_PRODUCTS
+    description: >
+      Product catalog dimension. One row per product. Standardised category
+      and price_tier make product analysis consistent.
+    columns:
+      - name: PRODUCT_ID
+        data_type: NUMBER
+        description: Unique product ID. Primary key.
+      - name: PRODUCT_NAME
+        data_type: VARCHAR
+        description: Product title.
+        synonyms: ["product", "item", "guitar", "amp"]
+      - name: CATEGORY
+        data_type: VARCHAR
+        description: >
+          Standardised product category: electric_guitars, acoustic_guitars,
+          amplifiers, effects_pedals, strings, accessories.
+          Mapped from raw Shopify product_type by dbt.
+        synonyms: ["category", "product type", "type"]
+      - name: PRICE_TIER
+        data_type: VARCHAR
+        description: >
+          Price tier: premium (>= $1,000), mid_range ($200-$999), budget (< $200).
+          Classified by dbt based on unit price.
+        synonyms: ["price range", "tier"]
+      - name: UNIT_PRICE
+        data_type: NUMBER
+        description: Current list price (USD).
+        synonyms: ["price", "list price", "retail price"]
+      - name: NET_REVENUE
+        data_type: NUMBER
+        description: Total net revenue from this product (USD).
+      - name: NET_UNITS_SOLD
+        data_type: NUMBER
+        description: Net units sold (gross minus refunds).
+        synonyms: ["units", "quantity sold", "volume"]
+      - name: UNIQUE_CUSTOMERS
+        data_type: NUMBER
+        description: Number of distinct customers who bought this product.
+
+relationships:
+  - name: orders_to_customers
+    left_table: fct_revenue
+    right_table: dim_customers
+    relationship_columns:
+      - left_column: CUSTOMER_ID
+        right_column: CUSTOMER_ID
+    join_type: left_outer
+    relationship_type: many_to_one
+
+verified_queries:
+  - name: total_revenue_last_month
+    question: "What was our total revenue last month?"
+    sql: >
+      SELECT SUM(AMOUNT_PAID) as total_revenue
+      FROM FRETWORK_GUITARS.MARTS.FCT_REVENUE
+      WHERE ORDER_DATE >= DATE_TRUNC('month', DATEADD('month', -1, CURRENT_DATE))
+        AND ORDER_DATE < DATE_TRUNC('month', CURRENT_DATE)
+        AND FINANCIAL_STATUS = 'paid'
+
+  - name: top_10_customers_by_ltv
+    question: "Who are our top 10 customers by lifetime value?"
+    sql: >
+      SELECT FULL_NAME, EMAIL, CUSTOMER_SEGMENT, TOTAL_LIFETIME_VALUE, NUMBER_OF_ORDERS
+      FROM FRETWORK_GUITARS.MARTS.DIM_CUSTOMERS
+      ORDER BY TOTAL_LIFETIME_VALUE DESC
+      LIMIT 10
+
+  - name: revenue_by_product_category
+    question: "What is our revenue by product category?"
+    sql: >
+      SELECT p.CATEGORY, SUM(r.AMOUNT_PAID) as revenue
+      FROM FRETWORK_GUITARS.MARTS.FCT_REVENUE r
+      JOIN FRETWORK_GUITARS.MARTS.DIM_PRODUCTS p ON r.ORDER_ID = r.ORDER_ID
+      GROUP BY p.CATEGORY
+      ORDER BY revenue DESC
+
+  - name: monthly_revenue_trend
+    question: "Show me monthly revenue for the last 12 months"
+    sql: >
+      SELECT ORDER_MONTH, SUM(AMOUNT_PAID) as monthly_revenue
+      FROM FRETWORK_GUITARS.MARTS.FCT_REVENUE
+      WHERE ORDER_DATE >= DATEADD('month', -12, CURRENT_DATE)
+        AND FINANCIAL_STATUS = 'paid'
+      GROUP BY ORDER_MONTH
+      ORDER BY ORDER_MONTH

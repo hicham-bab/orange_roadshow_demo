@@ -1,0 +1,235 @@
+models:
+
+  - name: dim_customers
+    description: >
+      B2C customer dimension. Grain: one row per customer_id (current active record only).
+      SCD2 history has been resolved — no duplicate customer_ids.
+      Loyalty segment description joined and readable (e.g., Gold, Platinum).
+      Includes geospatial coordinates and customer segmentation by units purchased.
+    access: public
+    config:
+      contract:
+        enforced: true
+
+    semantic_model:
+      enabled: true
+
+    agg_time_dimension: customer_since_date
+
+    columns:
+      - name: customer_id
+        description: Unique B2C customer business key (natural key from source).
+        data_type: number
+        constraints: [{type: not_null}, {type: primary_key}]
+        tests: [unique, not_null]
+        entity:
+          type: primary
+          name: customer
+
+      - name: customer_name
+        data_type: varchar
+        tests: [not_null]
+
+      - name: region
+        data_type: varchar
+        dimension:
+          type: categorical
+          description: Customer geographic region.
+
+      - name: state
+        data_type: varchar
+        dimension:
+          type: categorical
+
+      - name: city
+        data_type: varchar
+        dimension:
+          type: categorical
+
+      - name: loyalty_segment_id
+        data_type: number
+
+      - name: loyalty_segment_description
+        description: "Human-readable loyalty tier (e.g., Bronze, Silver, Gold, Platinum)."
+        data_type: varchar
+        dimension:
+          type: categorical
+          description: "Loyalty tier name: Bronze, Silver, Gold, Platinum."
+
+      - name: loyalty_unit_threshold
+        description: Minimum units purchased to qualify for this loyalty tier.
+        data_type: number
+
+      - name: units_purchased
+        description: Total units purchased by this customer (denormalized from source).
+        data_type: number
+
+      - name: customer_value_segment
+        description: "Derived value segment: high_value (top 20%), mid_value, low_value."
+        data_type: varchar
+        tests:
+          - accepted_values:
+              values: ['high_value', 'mid_value', 'low_value']
+        dimension:
+          type: categorical
+          description: "Value segment: high_value (top 20%), mid_value, low_value."
+
+      - name: lat
+        data_type: number
+
+      - name: lon
+        data_type: number
+
+      - name: customer_since_date
+        data_type: date
+        granularity: day
+        dimension:
+          type: time
+
+    metrics:
+      - name: total_customers
+        label: "Total Customers"
+        description: Total active B2C customers (current SCD2 records).
+        type: simple
+        agg: count
+        expr: customer_id
+
+      - name: total_units_purchased
+        label: "Total Units Purchased"
+        description: Total units purchased across all B2C customers.
+        type: simple
+        agg: sum
+        expr: units_purchased
+
+  - name: dim_b2b_customers
+    description: >
+      B2B account dimension. Grain: one row per B2B customer (ret_customers).
+      Enriched with order metrics, ticket counts, and account health status.
+    access: public
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: b2b_customer_id
+        description: Unique B2B account ID.
+        data_type: varchar
+        constraints: [{type: not_null}, {type: primary_key}]
+        tests: [unique, not_null]
+      - name: customer_name
+        data_type: varchar
+      - name: company_name
+        data_type: varchar
+      - name: region
+        data_type: varchar
+      - name: customer_start_date
+        data_type: date
+      - name: total_revenue
+        data_type: number
+      - name: total_orders
+        data_type: number
+      - name: return_rate
+        data_type: number
+      - name: open_tickets
+        data_type: number
+      - name: health_score
+        description: 0-100 score. Penalised for open tickets and high return rate.
+        data_type: number
+      - name: account_health_status
+        description: "Derived flag: healthy, needs_attention, at_risk."
+        data_type: varchar
+        tests:
+          - accepted_values:
+              values: ['healthy', 'needs_attention', 'at_risk']
+
+  - name: fct_sales_orders
+    description: >
+      B2C sales order fact table. Grain: one row per order.
+      Revenue derived from parsed ORDERED_PRODUCTS JSON — this is the governed
+      definition of revenue. ORDER_DATETIME converted from epoch to proper date.
+    access: public
+    config:
+      contract:
+        enforced: true
+
+    semantic_model:
+      enabled: true
+
+    agg_time_dimension: order_date
+
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_type: number
+        constraints: [{type: not_null}, {type: primary_key}]
+        tests: [unique, not_null]
+        entity:
+          type: primary
+          name: order
+
+      - name: order_number
+        data_type: number
+
+      - name: customer_id
+        data_type: number
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+        entity:
+          type: foreign
+          name: customer
+
+      - name: order_date
+        data_type: date
+        tests: [not_null]
+        granularity: day
+        dimension:
+          type: time
+
+      - name: order_timestamp
+        data_type: timestamp_ntz
+
+      - name: number_of_line_items
+        data_type: number
+
+      - name: total_revenue
+        description: Sum of (quantity x unit_price) across all line items. Derived from parsed ORDERED_PRODUCTS.
+        data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+      - name: promo_code
+        data_type: varchar
+
+      - name: has_promo
+        description: True if a promo code was applied to this order.
+        data_type: boolean
+        dimension:
+          type: categorical
+          description: Whether a promo code was applied.
+
+    metrics:
+      - name: total_b2c_revenue
+        label: "Total B2C Revenue"
+        description: >
+          Total B2C sales revenue derived from parsed ORDERED_PRODUCTS line items.
+          This is the governed definition — raw SALES_ORDERS has no revenue column.
+        type: simple
+        agg: sum
+        expr: total_revenue
+
+      - name: total_b2c_orders
+        label: "Total B2C Orders"
+        description: Total number of B2C sales orders.
+        type: simple
+        agg: count
+        expr: order_id
+
+      - name: total_line_items
+        label: "Total Line Items"
+        description: Total number of order line items.
+        type: simple
+        agg: sum
+        expr: number_of_line_items

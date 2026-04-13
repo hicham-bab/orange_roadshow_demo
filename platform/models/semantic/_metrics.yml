@@ -1,0 +1,35 @@
+metrics:
+
+  # B2C ratio metrics (cross-model)
+
+  - name: avg_b2c_order_value
+    label: "Avg B2C Order Value"
+    description: Average revenue per B2C order (USD).
+    type: ratio
+    numerator: total_b2c_revenue
+    denominator: total_b2c_orders
+
+  # B2B ratio metrics (cross-model)
+
+  - name: b2b_cancellation_rate
+    label: "B2B Cancellation Rate"
+    description: Proportion of B2B revenue lost to cancellations and returns.
+    type: ratio
+    numerator: b2b_cancelled_amount
+    denominator: total_b2b_revenue
+
+  - name: avg_b2b_order_value
+    label: "Avg B2B Order Value"
+    description: Average B2B order value (USD).
+    type: ratio
+    numerator: total_b2b_revenue
+    denominator: total_b2b_orders
+
+  # Customer ratio metrics (cross-model)
+
+  - name: avg_units_per_customer
+    label: "Avg Units per Customer"
+    description: Average units purchased per B2C customer.
+    type: ratio
+    numerator: total_units_purchased
+    denominator: total_customers

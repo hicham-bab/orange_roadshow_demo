@@ -1,0 +1,31 @@
+models:
+
+  - name: stg_customers
+    description: >
+      Staged B2C customers from the SCD2 source table. Contains ALL historical
+      records (not filtered to current). Use int_current_customers for the
+      current-record-only view. Epoch timestamps converted to dates.
+
+  - name: stg_loyalty_segments
+    description: >
+      Staged loyalty segment lookup. 4 rows. Translates numeric segment IDs
+      to human-readable descriptions (e.g., Bronze / Silver / Gold / Platinum).
+
+  - name: stg_sales_orders
+    description: >
+      Staged B2C sales orders. ORDER_DATETIME converted from epoch to timestamp.
+      ORDERED_PRODUCTS parsed from raw text to a structured JSON variant.
+      Soft-deleted rows excluded.
+
+  - name: stg_ret_customers
+    description: >
+      Staged B2B retail customer accounts. Soft-deleted rows excluded.
+
+  - name: stg_ret_orders
+    description: >
+      Staged B2B retail orders. Soft-deleted rows excluded.
+      Cancelled/returned orders retain their records with STATUS for filtering.
+
+  - name: stg_ret_tickets
+    description: >
+      Staged B2B support tickets. Soft-deleted rows excluded.

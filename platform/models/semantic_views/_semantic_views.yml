@@ -1,0 +1,13 @@
+models:
+  - name: cortex_raw_sv
+    description: >
+      Snowflake Semantic View pointing at raw Fivetran tables.
+      Used in Act 1 of the demo to show what happens when AI consumes ungoverned data.
+      Intentionally minimal: no revenue column, epoch dates, SCD2 inflation, raw segment numbers.
+
+  - name: cortex_dbt_sv
+    description: >
+      Snowflake Semantic View pointing at dbt-governed mart tables.
+      Used in Act 3 of the demo. Every problem from Act 1 is solved:
+      proper dates, derived revenue, resolved SCD2, joined lookups, B2B health scoring.
+      Defined in dbt alongside the models it describes — version-controlled, tested, governed.

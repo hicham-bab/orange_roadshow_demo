@@ -1,0 +1,26 @@
+harmony_finance_reporting:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "<your-account-identifier>"   # e.g. cmvgrnf.zna84829
+      user: "<your-username>"
+      password: "<your-password>"            # or: authenticator: externalbrowser
+      role: TRANSFORMER
+      warehouse: DBT_DEV_WH
+      database: HICHAMB_FIVETRAN_DEMO
+      schema: DEV_FINANCE
+      threads: 4
+      client_session_keep_alive: false
+
+    prod:
+      type: snowflake
+      account: "<your-account-identifier>"
+      user: "<your-username>"
+      password: "<your-password>"
+      role: TRANSFORMER
+      warehouse: DBT_DEV_WH
+      database: HICHAMB_FIVETRAN_DEMO
+      schema: FINANCE
+      threads: 8
+      client_session_keep_alive: false

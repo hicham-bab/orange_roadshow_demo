@@ -1,0 +1,18 @@
+models:
+  - name: int_current_customers
+    description: >
+      Filters the SCD2 customers table to CURRENT active records only
+      (is_current = true). One row per customer_id. Joins loyalty segment
+      descriptions so the loyalty tier name is available for marts.
+
+  - name: int_sales_order_lines
+    description: >
+      Explodes ORDERED_PRODUCTS JSON from stg_sales_orders into one row per
+      order line item. Extracts product_id, product_name, quantity, and unit_price
+      from the JSON array. Used by fct_sales_orders to compute order-level revenue.
+
+  - name: int_b2b_customer_health
+    description: >
+      Aggregates B2B customer metrics: total revenue, order count, return rate,
+      open ticket count, and a derived health score. One row per B2B customer.
+      Used by dim_b2b_customers.

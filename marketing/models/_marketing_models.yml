@@ -1,0 +1,18 @@
+models:
+  - name: loyalty_campaign_targets
+    description: >
+      High-value customer segments for targeted loyalty campaigns.
+      Consumes dim_customers and fct_sales_orders from the core platform project
+      via dbt Mesh cross-project references.
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: campaign_segment
+        tests:
+          - accepted_values:
+              values: ['vip_retention', 'upgrade_candidate', 'win_back', 'standard_nurture']
+
+  - name: regional_performance
+    description: >
+      Monthly regional sales performance for geo-targeted campaigns.
+      Consumes core platform models via dbt Mesh.

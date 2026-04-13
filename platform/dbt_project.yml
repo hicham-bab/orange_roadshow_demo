@@ -1,0 +1,68 @@
+name: fretwork_guitars
+version: '1.0.0'
+
+profile: fretwork_guitars
+
+model-paths:    ["models"]
+seed-paths:     ["seeds"]
+test-paths:     ["tests"]
+macro-paths:    ["macros"]
+analysis-paths: ["analyses"]
+snapshot-paths: ["snapshots"]
+
+target-path:   "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Fivetran Google Cloud SQL → Snowflake destination
+  retail_database: HICHAMB_FIVETRAN_DEMO
+  retail_schema:   RETAIL_DEMO_RETAIL
+
+groups:
+  - name: core
+    owner:
+      name: Data Engineering
+      email: data-eng@harmonymusic.com
+  - name: finance
+    owner:
+      name: Finance Analytics
+      email: finance-analytics@harmonymusic.com
+
+models:
+  fretwork_guitars:
+    staging:
+      +materialized: view
+      +schema: staging
+
+    intermediate:
+      +materialized: ephemeral
+
+    marts:
+      core:
+        +materialized: table
+        +schema: marts
+        +group: core
+        +persist_docs:
+          relation: true
+          columns: true
+      finance:
+        +materialized: table
+        +schema: marts
+        +group: finance
+        +persist_docs:
+          relation: true
+          columns: true
+
+    semantic:
+      +materialized: table
+      +schema: semantic
+
+    semantic_views:
+      +schema: marts
+
+semantic-layer:
+  time-spine:
+    standard:
+      columns:
+        - name: date_day
+          granularity: day

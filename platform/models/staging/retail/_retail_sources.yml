@@ -1,0 +1,173 @@
+sources:
+  - name: retail
+    description: >
+      Retail data synced from Google Cloud SQL (PostgreSQL) via Fivetran into Snowflake.
+      Contains B2C customers, sales orders, B2B accounts, B2B orders, support tickets,
+      and a loyalty segment lookup table.
+    database: "{{ var('retail_database', 'HICHAMB_FIVETRAN_DEMO') }}"
+    schema: "{{ var('retail_schema', 'RETAIL_DEMO_RETAIL') }}"
+    loader: fivetran
+    loaded_at_field: _fivetran_synced
+    freshness:
+      warn_after:  {count: 12, period: hour}
+      error_after: {count: 48, period: hour}
+
+    tables:
+
+      - name: customers
+        description: >
+          B2C customer master table. This is a Slowly Changing Dimension Type 2 (SCD2) table —
+          each customer_id may have multiple rows representing different periods of validity.
+          VALID_FROM and VALID_TO are Unix epoch timestamps (numbers). VALID_TO = 0 or NULL
+          indicates the current active record.
+          LOYALTY_SEGMENT is a foreign key to loyalty_segments.loyalty_segment_id.
+          LAT/LON provide geospatial customer location.
+        columns:
+          - name: ID
+            description: Surrogate key (SCD2 row ID). Not unique per customer.
+          - name: CUSTOMER_ID
+            description: Natural/business customer identifier. May appear on multiple rows (SCD2 history).
+          - name: CUSTOMER_NAME
+            description: Customer full name.
+          - name: CITY
+            description: Customer city.
+          - name: STATE
+            description: Customer state or province.
+          - name: REGION
+            description: Customer region.
+          - name: DISTRICT
+            description: Customer district.
+          - name: POSTCODE
+            description: Postal code.
+          - name: STREET
+            description: Street address.
+          - name: SHIP_TO_ADDRESS
+            description: Full shipping address.
+          - name: LAT
+            description: Customer location latitude.
+          - name: LON
+            description: Customer location longitude.
+          - name: LOYALTY_SEGMENT
+            description: FK to loyalty_segments.loyalty_segment_id. Raw number — join for description.
+          - name: UNITS_PURCHASED
+            description: Denormalized running total of units purchased by this customer.
+          - name: UNIT
+            description: Unit type or UoM.
+          - name: NUMBER
+            description: Customer reference number.
+          - name: TAX_ID
+            description: Tax identifier.
+          - name: TAX_CODE
+            description: Tax code classification.
+          - name: VALID_FROM
+            description: Unix epoch timestamp for start of this SCD2 record's validity.
+          - name: VALID_TO
+            description: Unix epoch timestamp for end of validity. 0 or NULL = current active record.
+          - name: _FIVETRAN_DELETED
+            description: Soft-delete flag set by Fivetran.
+          - name: _FIVETRAN_SYNCED
+            description: Timestamp of last Fivetran sync.
+
+      - name: loyalty_segments
+        description: >
+          Lookup table for loyalty segment definitions. 4 rows — one per segment tier.
+          Join on loyalty_segment_id to translate numeric segment codes in the customers table.
+        columns:
+          - name: LOYALTY_SEGMENT_ID
+            description: Primary key. Matches CUSTOMERS.LOYALTY_SEGMENT.
+          - name: LOYALTY_SEGMENT_DESCRIPTION
+            description: Human-readable segment name (e.g., Bronze, Silver, Gold, Platinum).
+          - name: UNIT_THRESHOLD
+            description: Minimum units purchased to qualify for this segment.
+          - name: VALID_FROM
+            description: Date from which this segment definition applies.
+          - name: VALID_TO
+            description: Date until which this segment definition applies.
+
+      - name: sales_orders
+        description: >
+          B2C sales order transactions. CUSTOMER_ID joins to customers.customer_id (natural key).
+          ORDER_DATETIME is a Unix epoch timestamp stored as NUMBER — requires conversion.
+          ORDERED_PRODUCTS contains product details as raw text (JSON array) — dbt parses this.
+          No standalone revenue amount column: revenue must be derived from ORDERED_PRODUCTS.
+        columns:
+          - name: ID
+            description: Unique order row ID.
+          - name: ORDER_NUMBER
+            description: Business-facing order number.
+          - name: CUSTOMER_ID
+            description: FK to customers.customer_id (natural key, not surrogate ID).
+          - name: CUSTOMER_NAME
+            description: Customer name denormalized on the order.
+          - name: ORDER_DATETIME
+            description: >
+              Order timestamp stored as Unix epoch (NUMBER). Use
+              TO_TIMESTAMP(ORDER_DATETIME) to convert to a usable datetime.
+          - name: ORDERED_PRODUCTS
+            description: >
+              Raw text field containing ordered product details.
+              Typically a JSON array: [{"product_id":..., "name":..., "qty":..., "price":...}]
+              Must be parsed with PARSE_JSON() / FLATTEN() to extract line items.
+          - name: NUMBER_OF_LINE_ITEMS
+            description: Count of distinct products in the order.
+          - name: CLICKED_ITEMS
+            description: Clickstream data — items viewed before purchase. Raw text/JSON.
+          - name: PROMO_INFO
+            description: Promotion or discount code applied to the order. Raw text.
+          - name: _FIVETRAN_DELETED
+            description: Soft-delete flag set by Fivetran.
+          - name: _FIVETRAN_SYNCED
+            description: Timestamp of last Fivetran sync.
+
+      - name: ret_customers
+        description: >
+          B2B / retail business accounts. Smaller set (100 rows) of business customers.
+          ID is a TEXT identifier (e.g., 'C001'). Links to ret_orders and ret_tickets.
+        columns:
+          - name: ID
+            description: Unique B2B customer ID (text format, e.g., 'C001').
+          - name: NAME
+            description: Business account name.
+          - name: EMAIL
+            description: Primary contact email.
+          - name: REGION
+            description: Geographic region.
+          - name: COMPANY_NAME
+            description: Legal company name.
+          - name: CUSTOMER_START_DATE
+            description: Date when the B2B account was onboarded.
+
+      - name: ret_orders
+        description: >
+          B2B retail orders. ORDER_USER_ID joins to ret_customers.id.
+          AMOUNT is a clean numeric revenue field (unlike sales_orders).
+          STATUS indicates order lifecycle; CANCEL_RETURN_REASON captures issues.
+        columns:
+          - name: ID
+            description: Unique order ID.
+          - name: ORDER_USER_ID
+            description: FK to ret_customers.id.
+          - name: AMOUNT
+            description: Order amount (clean numeric revenue field).
+          - name: STATUS
+            description: Order status (e.g., completed, cancelled, returned).
+          - name: CANCEL_RETURN_REASON
+            description: Reason for cancellation or return, if applicable.
+          - name: CREATED_AT
+            description: Order creation timestamp.
+
+      - name: ret_tickets
+        description: >
+          B2B customer support tickets. TICKET_USER_ID joins to ret_customers.id.
+          Captures issue type and resolution status. Used for customer health scoring.
+        columns:
+          - name: ID
+            description: Unique ticket ID.
+          - name: TICKET_USER_ID
+            description: FK to ret_customers.id.
+          - name: ISSUE_TYPE
+            description: Category of the support issue.
+          - name: STATUS
+            description: Ticket resolution status (open, resolved, escalated, etc.).
+          - name: CREATED_AT
+            description: Timestamp when the ticket was opened.
