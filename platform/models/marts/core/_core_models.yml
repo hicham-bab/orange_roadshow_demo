@@ -6,7 +6,6 @@ models:
       SCD2 history has been resolved — no duplicate customer_ids.
       Loyalty segment description joined and readable (e.g., Gold, Platinum).
       Includes geospatial coordinates and customer segmentation by units purchased.
-    access: public
     config:
       contract:
         enforced: true
@@ -105,7 +104,6 @@ models:
     description: >
       B2B account dimension. Grain: one row per B2B customer (ret_customers).
       Enriched with order metrics, ticket counts, and account health status.
-    access: public
     config:
       contract:
         enforced: true
@@ -146,7 +144,6 @@ models:
       B2C sales order fact table. Grain: one row per order.
       Revenue derived from parsed ORDERED_PRODUCTS JSON — this is the governed
       definition of revenue. ORDER_DATETIME converted from epoch to proper date.
-    access: public
     config:
       contract:
         enforced: true

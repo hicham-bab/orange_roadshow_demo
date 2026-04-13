@@ -35,4 +35,4 @@ select
 
     _fivetran_synced
 from {{ source('retail', 'sales_orders') }}
-where (_fivetran_deleted is false or _fivetran_deleted is null)
+where (not _fivetran_deleted or _fivetran_deleted is null)
