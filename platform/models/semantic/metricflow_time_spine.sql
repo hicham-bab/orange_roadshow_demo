@@ -1,6 +1,5 @@
 -- Time spine model required by MetricFlow for time-series metrics.
 -- Provides a contiguous daily date series from 2022-01-01 to 2030-01-01.
--- Configure in dbt_project.yml under semantic-layer.time-spine.
 
 {{
     config(
