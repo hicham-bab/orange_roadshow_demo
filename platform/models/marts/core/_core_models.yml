@@ -334,9 +334,9 @@ models:
               arguments:
                 min_value: 0
       - name: unit_cost
-        data_type: float
+        data_type: number
       - name: line_margin
-        data_type: float
+        data_type: number
       - name: has_catalog_match
         data_type: boolean
 
