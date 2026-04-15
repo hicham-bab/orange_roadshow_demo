@@ -32,6 +32,7 @@ models:
 
       - name: region
         data_type: varchar
+        tests: [not_null]
         dimension:
           type: categorical
           description: Customer geographic region.
@@ -54,6 +55,12 @@ models:
 
       - name: ship_to_address
         data_type: varchar
+
+      - name: lat
+        data_type: number
+
+      - name: lon
+        data_type: number
 
       - name: loyalty_segment_id
         data_type: number
@@ -83,12 +90,6 @@ models:
         dimension:
           type: categorical
           description: "Value segment: high_value (top 20%), mid_value, low_value."
-
-      - name: lat
-        data_type: number
-
-      - name: lon
-        data_type: number
 
       - name: customer_since_date
         data_type: date
@@ -130,16 +131,23 @@ models:
         tests: [unique, not_null]
       - name: customer_name
         data_type: varchar
+        tests: [not_null]
       - name: company_name
         data_type: varchar
+        tests: [not_null]
       - name: region
         data_type: varchar
+        tests: [not_null]
       - name: customer_start_date
         data_type: date
       - name: total_orders
         data_type: number
       - name: total_revenue
         data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
       - name: cancelled_revenue
         data_type: number
       - name: cancelled_orders
@@ -156,9 +164,19 @@ models:
         data_type: number
       - name: return_rate
         data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 1
       - name: health_score
         description: 0-100 score. Penalised for open tickets and high return rate.
         data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100
       - name: account_health_status
         description: "Derived flag: healthy, needs_attention, at_risk."
         data_type: varchar
@@ -269,3 +287,115 @@ models:
         type: simple
         agg: sum
         expr: number_of_line_items
+
+  - name: fct_order_lines
+    description: >
+      B2C order line-item fact table. Grain: one row per order + product.
+      Enriched with product catalog data (category, cost) for margin analysis.
+    config:
+      access: public
+      contract:
+        enforced: true
+    columns:
+      - name: order_id
+        data_type: number
+        tests: [not_null]
+      - name: order_date
+        data_type: date
+        tests: [not_null]
+      - name: customer_id
+        data_type: number
+        tests: [not_null]
+      - name: line_number
+        data_type: number
+      - name: product_id
+        data_type: number
+      - name: product_name
+        data_type: varchar
+      - name: product_category
+        data_type: varchar
+      - name: product_subcategory
+        data_type: varchar
+      - name: quantity
+        data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+      - name: unit_price
+        data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: line_revenue
+        data_type: number
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: unit_cost
+        data_type: number
+      - name: line_margin
+        data_type: number
+      - name: has_catalog_match
+        data_type: boolean
+
+  - name: dim_regional_sales_targets
+    description: >
+      Regional sales targets dimension. Monthly revenue and order targets
+      by region for H1 2026.
+    config:
+      access: public
+      contract:
+        enforced: true
+    columns:
+      - name: region
+        data_type: varchar
+        tests: [not_null]
+      - name: target_month
+        data_type: date
+        tests: [not_null]
+      - name: revenue_target
+        data_type: number
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: order_target
+        data_type: number
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: notes
+        data_type: varchar
+
+  - name: rpt_promo_effectiveness
+    description: >
+      Campaign-level performance report. Measures promotion ROI by joining
+      B2C orders to promo campaign definitions.
+    columns:
+      - name: promo_code
+        tests: [unique, not_null]
+      - name: campaign_name
+        tests: [not_null]
+      - name: campaign_type
+        tests: [not_null]
+      - name: campaign_budget
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: total_orders
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: gross_revenue
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0

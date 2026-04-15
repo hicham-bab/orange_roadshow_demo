@@ -17,3 +17,18 @@ models:
     description: >
       Monthly regional sales performance for geo-targeted campaigns.
       Consumes core platform models via dbt Mesh.
+
+  - name: regional_target_attainment
+    description: >
+      Compares actual regional sales performance against monthly targets.
+      Identifies underperforming regions for campaign intervention.
+    columns:
+      - name: region
+        tests: [not_null]
+      - name: month
+        tests: [not_null]
+      - name: performance_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['on_track', 'at_risk', 'behind', 'no_target']

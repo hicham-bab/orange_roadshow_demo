@@ -1,0 +1,21 @@
+product_id,product_name,category,subcategory,unit_cost,launch_date,is_active
+101,Premium Wireless Earbuds,Electronics,Audio,22.50,2024-06-01,true
+102,Smart Fitness Tracker,Electronics,Wearables,18.75,2024-08-15,true
+103,Organic Green Tea Set,Food & Beverage,Tea,4.20,2025-01-10,true
+104,Bamboo Desk Organizer,Home & Office,Organization,6.80,2025-03-01,true
+105,Ultra-Slim Power Bank,Electronics,Accessories,11.30,2025-04-20,true
+106,Artisan Coffee Blend,Food & Beverage,Coffee,5.60,2025-06-01,true
+107,Ergonomic Mouse Pad,Home & Office,Accessories,3.40,2025-07-15,true
+108,Stainless Steel Water Bottle,Sports & Outdoor,Hydration,7.90,2025-09-01,true
+109,Noise-Cancelling Headphones,Electronics,Audio,35.00,2025-10-01,true
+110,Yoga Mat Premium,Sports & Outdoor,Fitness,12.50,2025-11-15,true
+111,Smart LED Desk Lamp,Home & Office,Lighting,14.20,2026-01-05,true
+112,Plant-Based Protein Bars (12pk),Food & Beverage,Snacks,8.10,2026-01-15,true
+113,Portable Bluetooth Speaker,Electronics,Audio,16.40,2026-02-01,true
+114,Reusable Grocery Bag Set,Home & Office,Sustainability,2.80,2026-02-10,true
+115,Running Shoes Pro,Sports & Outdoor,Footwear,28.50,2026-03-01,true
+116,Ceramic Travel Mug,Food & Beverage,Drinkware,5.30,2026-03-10,true
+117,Wireless Charging Pad,Electronics,Accessories,8.70,2026-03-15,true
+118,Resistance Band Set,Sports & Outdoor,Fitness,4.60,2026-04-01,true
+119,Organic Matcha Powder,Food & Beverage,Tea,9.20,2026-04-05,true
+120,Compact Webcam HD,Electronics,Accessories,13.80,2026-04-10,true

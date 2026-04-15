@@ -17,6 +17,10 @@ vars:
   retail_database: HICHAMB_FIVETRAN_DEMO
   retail_schema:   RETAIL_DEMO_RETAIL
 
+seeds:
+  harmony_central_data:
+    +schema: seeds
+
 models:
   harmony_central_data:
     staging:

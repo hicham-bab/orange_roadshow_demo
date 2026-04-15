@@ -1,0 +1,69 @@
+models:
+
+  - name: stg_product_catalog
+    description: >
+      Staged product catalog from seed data. Active products only.
+      Used for product-level enrichment on order line items.
+    columns:
+      - name: product_id
+        description: Unique product identifier.
+        tests: [unique, not_null]
+      - name: product_name
+        tests: [not_null]
+      - name: category
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Electronics', 'Food & Beverage', 'Home & Office', 'Sports & Outdoor']
+      - name: unit_cost
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+
+  - name: stg_regional_sales_targets
+    description: >
+      Staged regional sales targets from seed data. Monthly revenue and order
+      targets by region for H1 2026.
+    columns:
+      - name: region
+        tests: [not_null]
+      - name: target_month
+        tests: [not_null]
+      - name: revenue_target
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: order_target
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+
+  - name: stg_promo_campaigns
+    description: >
+      Staged promo campaign definitions from seed data.
+      Enriches B2C orders with campaign context for effectiveness analysis.
+    columns:
+      - name: promo_code
+        description: Unique promotion code matching fct_sales_orders.promo_code.
+        tests: [unique, not_null]
+      - name: campaign_name
+        tests: [not_null]
+      - name: discount_pct
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: campaign_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['seasonal', 'clearance', 'loyalty', 'flash', 'referral', 'thematic', 'upsell', 'shipping', 'acquisition']
