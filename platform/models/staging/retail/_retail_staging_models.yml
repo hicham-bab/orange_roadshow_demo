@@ -5,26 +5,82 @@ models:
       Staged B2C customers from the SCD2 source table. Contains ALL historical
       records (not filtered to current). Use int_current_customers for the
       current-record-only view. Epoch timestamps converted to dates.
+    columns:
+      - name: surrogate_id
+        tests: [not_null]
+      - name: customer_id
+        tests: [not_null]
+      - name: customer_name
+        tests: [not_null]
+      - name: region
+        tests: [not_null]
 
   - name: stg_loyalty_segments
     description: >
       Staged loyalty segment lookup. 4 rows. Translates numeric segment IDs
       to human-readable descriptions (e.g., Bronze / Silver / Gold / Platinum).
+    columns:
+      - name: loyalty_segment_id
+        tests: [unique, not_null]
+      - name: loyalty_segment_description
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Bronze', 'Silver', 'Gold', 'Platinum']
 
   - name: stg_sales_orders
     description: >
       Staged B2C sales orders. ORDER_DATETIME converted from epoch to timestamp.
       ORDERED_PRODUCTS parsed from raw text to a structured JSON variant.
       Soft-deleted rows excluded.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: customer_id
+        tests: [not_null]
+      - name: order_date
+        tests: [not_null]
 
   - name: stg_ret_customers
     description: >
       Staged B2B retail customer accounts. Soft-deleted rows excluded.
+    columns:
+      - name: b2b_customer_id
+        tests: [unique, not_null]
+      - name: customer_name
+        tests: [not_null]
+      - name: email
+        tests: [not_null]
+      - name: region
+        tests: [not_null]
 
   - name: stg_ret_orders
     description: >
       Staged B2B retail orders. Soft-deleted rows excluded.
       Cancelled/returned orders retain their records with STATUS for filtering.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: b2b_customer_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_ret_customers')
+                field: b2b_customer_id
+      - name: amount
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['completed', 'cancelled', 'returned', 'pending', 'shipped']
 
   - name: stg_ret_tickets
     description: >

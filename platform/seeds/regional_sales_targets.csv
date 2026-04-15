@@ -1,0 +1,31 @@
+region,target_month,revenue_target,order_target,notes
+Northeast,2026-01-01,180000,420,Post-holiday recovery
+Southeast,2026-01-01,155000,380,Steady growth
+Midwest,2026-01-01,140000,340,Winter slowdown expected
+West,2026-01-01,195000,460,Strong online channel
+Southwest,2026-01-01,120000,290,New market expansion
+Northeast,2026-02-01,195000,450,Valentine's push
+Southeast,2026-02-01,165000,400,Valentine's push
+Midwest,2026-02-01,148000,355,Valentine's push
+West,2026-02-01,210000,490,Valentine's push
+Southwest,2026-02-01,130000,310,Valentine's push
+Northeast,2026-03-01,220000,510,Spring launch ramp
+Southeast,2026-03-01,185000,440,Spring launch ramp
+Midwest,2026-03-01,165000,395,Spring launch ramp
+West,2026-03-01,235000,540,Spring launch ramp
+Southwest,2026-03-01,145000,345,Spring launch ramp
+Northeast,2026-04-01,240000,550,Peak Q2 target
+Southeast,2026-04-01,200000,470,Peak Q2 target
+Midwest,2026-04-01,178000,420,Peak Q2 target
+West,2026-04-01,255000,590,Peak Q2 target
+Southwest,2026-04-01,158000,370,Peak Q2 target
+Northeast,2026-05-01,235000,540,Sustain momentum
+Southeast,2026-05-01,195000,460,Sustain momentum
+Midwest,2026-05-01,172000,410,Sustain momentum
+West,2026-05-01,248000,575,Sustain momentum
+Southwest,2026-05-01,152000,360,Sustain momentum
+Northeast,2026-06-01,225000,520,Summer prep
+Southeast,2026-06-01,190000,450,Summer prep
+Midwest,2026-06-01,168000,400,Summer prep
+West,2026-06-01,242000,560,Summer prep
+Southwest,2026-06-01,148000,350,Summer prep
