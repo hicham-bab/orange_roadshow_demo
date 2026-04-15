@@ -58,3 +58,4 @@ select
     unit_price,
     quantity * unit_price                               as line_revenue
 from exploded
+where product_id is not null
