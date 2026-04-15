@@ -19,3 +19,5 @@ product_id,product_name,category,subcategory,unit_cost,launch_date,is_active
 118,Resistance Band Set,Sports & Outdoor,Fitness,4.60,2026-04-01,true
 119,Organic Matcha Powder,Food & Beverage,Tea,9.20,2026-04-05,true
 120,Compact Webcam HD,Electronics,Accessories,13.80,2026-04-10,true
+121,Mystery Box Surprise,Gifts & Novelty,Bundles,15.00,2026-04-12,true
+122,Eco-Friendly Notebook,Stationery,Paper,-2.50,2026-04-14,true
