@@ -9,7 +9,7 @@ select
     product_name,
     category,
     subcategory,
-    unit_cost,
+    unit_cost::number(12, 2)                    as unit_cost,
     launch_date,
     is_active
 from {{ ref('product_catalog') }}
