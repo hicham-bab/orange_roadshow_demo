@@ -29,12 +29,12 @@ select
     l.quantity,
     l.unit_price,
     l.line_revenue,
-    p.unit_cost,
+    p.unit_cost::float                           as unit_cost,
     -- Margin only when cost data is available
     case
         when p.unit_cost is not null
         then l.line_revenue - (l.quantity * p.unit_cost)
-    end                                         as line_margin,
+    end::float                                  as line_margin,
     p.product_id is not null                    as has_catalog_match
 
 from lines l
