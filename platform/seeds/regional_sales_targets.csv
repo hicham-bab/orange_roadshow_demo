@@ -29,3 +29,5 @@ Southeast,2026-06-01,190000,450,Summer prep
 Midwest,2026-06-01,168000,400,Summer prep
 West,2026-06-01,242000,560,Summer prep
 Southwest,2026-06-01,148000,350,Summer prep
+,2026-07-01,200000,480,Missing region entry
+Northeast,2026-07-01,-50000,500,Negative target error
