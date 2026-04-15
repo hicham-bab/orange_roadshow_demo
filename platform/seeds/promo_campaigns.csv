@@ -14,3 +14,5 @@ VIP25,VIP Exclusive Access,25,loyalty,2026-01-01,2026-12-31,email,50000
 BUNDLE5,Bundle & Save,5,upsell,2026-02-01,2026-04-30,all,9000
 FREESHIP,Free Shipping Week,0,shipping,2026-03-08,2026-03-15,all,7000
 WELCOME15,New Customer Welcome,15,acquisition,2026-01-01,2026-06-30,app,35000
+SUMMER26,Summer Kickoff Sale,18,seasonal,2026-06-01,2026-06-15,all,28000
+HYDRATE10,Hydration Challenge,10,thematic,2026-05-01,2026-05-31,social,11000

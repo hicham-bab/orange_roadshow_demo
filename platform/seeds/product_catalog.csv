@@ -19,3 +19,6 @@ product_id,product_name,category,subcategory,unit_cost,launch_date,is_active
 118,Resistance Band Set,Sports & Outdoor,Fitness,4.60,2026-04-01,true
 119,Organic Matcha Powder,Food & Beverage,Tea,9.20,2026-04-05,true
 120,Compact Webcam HD,Electronics,Accessories,13.80,2026-04-10,true
+121,Trail Running Vest,Sports & Outdoor,Fitness,19.40,2026-04-12,true
+122,Cold Brew Coffee Kit,Food & Beverage,Coffee,11.20,2026-04-14,true
+123,Standing Desk Converter,Home & Office,Furniture,45.00,2026-04-15,true
