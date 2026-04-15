@@ -12,9 +12,11 @@ with actuals as (
     select
         region,
         order_month,
-        total_orders,
-        monthly_revenue
+        sum(total_orders)       as total_orders,
+        sum(monthly_revenue)    as monthly_revenue
     from {{ ref('regional_performance') }}
+    where region is not null
+    group by region, order_month
 ),
 
 targets as (
