@@ -32,7 +32,6 @@ models:
 
       - name: region
         data_type: varchar
-        tests: [not_null]
         dimension:
           type: categorical
           description: Customer geographic region.

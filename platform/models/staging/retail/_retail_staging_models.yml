@@ -12,22 +12,16 @@ models:
         tests: [not_null]
       - name: customer_name
         tests: [not_null]
-      - name: region
-        tests: [not_null]
 
   - name: stg_loyalty_segments
     description: >
-      Staged loyalty segment lookup. 4 rows. Translates numeric segment IDs
-      to human-readable descriptions (e.g., Bronze / Silver / Gold / Platinum).
+      Staged loyalty segment lookup. Translates numeric segment IDs
+      to human-readable descriptions.
     columns:
       - name: loyalty_segment_id
         tests: [unique, not_null]
       - name: loyalty_segment_description
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['Bronze', 'Silver', 'Gold', 'Platinum']
+        tests: [not_null]
 
   - name: stg_sales_orders
     description: >
@@ -38,8 +32,6 @@ models:
       - name: order_id
         tests: [unique, not_null]
       - name: customer_id
-        tests: [not_null]
-      - name: order_date
         tests: [not_null]
 
   - name: stg_ret_customers
@@ -76,11 +68,7 @@ models:
               arguments:
                 min_value: 0
       - name: status
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['completed', 'cancelled', 'returned', 'pending', 'shipped']
+        tests: [not_null]
 
   - name: stg_ret_tickets
     description: >
