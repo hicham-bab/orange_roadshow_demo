@@ -38,7 +38,7 @@ select
     -- Value segment based on units purchased percentile
     case
         when pct_rank <= 0.20 then 'high_value'
-        when pct_rank <= 0.60 then 'mid_value'
+        when pct_rank <= 1.00 then 'mid_value'
         else                       'low_value'
     end                         as customer_value_segment
 
