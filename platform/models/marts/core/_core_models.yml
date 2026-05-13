@@ -21,14 +21,14 @@ models:
         description: Unique B2C customer business key (natural key from source).
         data_type: number
         constraints: [{type: not_null}, {type: primary_key}]
-        tests: [unique, not_null]
+        data_tests: [unique, not_null]
         entity:
           type: primary
           name: customer
 
       - name: customer_name
         data_type: varchar
-        tests: [not_null]
+        data_tests: [not_null]
 
       - name: region
         data_type: varchar
@@ -82,7 +82,7 @@ models:
       - name: customer_value_segment
         description: "Derived value segment: high_value (top 20%), mid_value, low_value."
         data_type: varchar
-        tests:
+        data_tests:
           - accepted_values:
               arguments:
                 values: ['high_value', 'mid_value', 'low_value']
@@ -127,23 +127,23 @@ models:
         description: Unique B2B account ID.
         data_type: varchar
         constraints: [{type: not_null}, {type: primary_key}]
-        tests: [unique, not_null]
+        data_tests: [unique, not_null]
       - name: customer_name
         data_type: varchar
-        tests: [not_null]
+        data_tests: [not_null]
       - name: company_name
         data_type: varchar
-        tests: [not_null]
+        data_tests: [not_null]
       - name: region
         data_type: varchar
-        tests: [not_null]
+        data_tests: [not_null]
       - name: customer_start_date
         data_type: date
       - name: total_orders
         data_type: number
       - name: total_revenue
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
@@ -163,7 +163,7 @@ models:
         data_type: number
       - name: return_rate
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
@@ -171,7 +171,7 @@ models:
       - name: health_score
         description: 0-100 score. Penalised for open tickets and high return rate.
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
@@ -179,7 +179,7 @@ models:
       - name: account_health_status
         description: "Derived flag: healthy, needs_attention, at_risk."
         data_type: varchar
-        tests:
+        data_tests:
           - accepted_values:
               arguments:
                 values: ['healthy', 'needs_attention', 'at_risk']
@@ -204,7 +204,7 @@ models:
         description: Unique order identifier.
         data_type: number
         constraints: [{type: not_null}, {type: primary_key}]
-        tests: [unique, not_null]
+        data_tests: [unique, not_null]
         entity:
           type: primary
           name: order
@@ -214,7 +214,7 @@ models:
 
       - name: customer_id
         data_type: number
-        tests:
+        data_tests:
           - not_null
           - relationships:
               arguments:
@@ -226,7 +226,7 @@ models:
 
       - name: order_date
         data_type: date
-        tests: [not_null]
+        data_tests: [not_null]
         granularity: day
         dimension:
           type: time
@@ -240,7 +240,7 @@ models:
       - name: total_revenue
         description: Sum of (quantity x unit_price) across all line items. Derived from parsed ORDERED_PRODUCTS.
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
@@ -287,6 +287,62 @@ models:
         agg: sum
         expr: number_of_line_items
 
+  - name: fct_customer_lifetime_value
+    description: >
+      Customer-level lifetime value fact. Grain: one row per customer_id.
+      Joins the governed customer dimension to B2C sales orders and calculates
+      lifetime revenue, order count, average order value, and tenure since first order.
+    config:
+      access: public
+      contract:
+        enforced: true
+    columns:
+      - name: customer_id
+        description: Unique B2C customer identifier.
+        data_type: number
+        constraints: [{type: not_null}, {type: primary_key}]
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: customer_name
+        description: Customer name from the governed customer dimension.
+        data_type: varchar
+      - name: first_order_date
+        description: Earliest order date recorded for the customer.
+        data_type: date
+      - name: total_revenue
+        description: Sum of total_revenue across all orders for the customer.
+        data_type: number
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: order_count
+        description: Count of orders placed by the customer.
+        data_type: number
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: average_order_value
+        description: Average revenue per order for the customer.
+        data_type: number(38,2)
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: days_since_first_order
+        description: Number of days between the customer's first order date and today.
+        data_type: number
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+
   - name: fct_order_lines
     description: >
       B2C order line-item fact table. Grain: one row per order + product.
@@ -298,13 +354,13 @@ models:
     columns:
       - name: order_id
         data_type: number
-        tests: [not_null]
+        data_tests: [not_null]
       - name: order_date
         data_type: date
-        tests: [not_null]
+        data_tests: [not_null]
       - name: customer_id
         data_type: number
-        tests: [not_null]
+        data_tests: [not_null]
       - name: line_number
         data_type: number
       - name: product_id
@@ -317,19 +373,19 @@ models:
         data_type: varchar
       - name: quantity
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 1
       - name: unit_price
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
       - name: line_revenue
         data_type: number
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
@@ -351,20 +407,20 @@ models:
     columns:
       - name: region
         data_type: varchar
-        tests: [not_null]
+        data_tests: [not_null]
       - name: target_month
         data_type: date
-        tests: [not_null]
+        data_tests: [not_null]
       - name: revenue_target
         data_type: number
-        tests:
+        data_tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
       - name: order_target
         data_type: number
-        tests:
+        data_tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
@@ -378,23 +434,23 @@ models:
       B2C orders to promo campaign definitions.
     columns:
       - name: promo_code
-        tests: [unique, not_null]
+        data_tests: [unique, not_null]
       - name: campaign_name
-        tests: [not_null]
+        data_tests: [not_null]
       - name: campaign_type
-        tests: [not_null]
+        data_tests: [not_null]
       - name: campaign_budget
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
       - name: total_orders
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
       - name: gross_revenue
-        tests:
+        data_tests:
           - dbt_expectations.expect_column_values_to_be_between:
               arguments:
                 min_value: 0
